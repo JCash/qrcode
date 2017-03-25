@@ -13,8 +13,8 @@ def run(cmd, cwd=None):
     p.wait()
     print(p.stdout.read())
     print(p.stderr.read())
-    if not p.returncode:
-        raise Exception("Failed")
+    #if not p.returncode:
+    #    raise Exception("Failed")
 
 def curl(url, path):
     cmd = 'curl -L %s -o %s' % (url,path)
