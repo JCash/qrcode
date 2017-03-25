@@ -31,3 +31,4 @@
 build
 test/build
 test/zxing
+test/*.zip
