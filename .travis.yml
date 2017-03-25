@@ -4,6 +4,7 @@ compiler:
 
 matrix:
   include:
+    - os: osx
     - os: linux
       before_install:
         - sudo apt-get install python2.7
