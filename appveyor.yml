@@ -1,15 +1,14 @@
 platform:
+  - x86
   - x64
 
 install:
+  - cd test
+  - python.exe setup.py
 
 build_script:
   - compile_cl.bat
-  - cd test
-  - compile_cl.bat
-  - cd ..
 
 test_script:
-  - build\main.exe -?
-  - build\main.exe -w 512 -h 512 -n 100 -o citest.png
-  - build\test.exe
+  - build\testencode.exe
+  - python.exe run.py

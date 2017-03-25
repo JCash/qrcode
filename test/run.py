@@ -2,6 +2,9 @@ import sys, os, subprocess
 
 REF_DECODER='build/zxing'
 ENCODER='../build/qrencode'
+if sys.platform == 'win32':
+    REF_DECODER+='.exe'
+    ENCODER+='.exe'
 
 def run(cmd, cwd=None):
     p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
