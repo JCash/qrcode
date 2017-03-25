@@ -41,7 +41,7 @@ JCQRCode* jc_qrencode(const uint8_t* input, uint32_t inputlength, uint32_t ecl);
 static void print_bits(const char* tag, uint32_t v, uint32_t count)
 {
     printf("%s 0b", tag);
-    for( int32_t i = 0; i < count; ++i)
+    for( uint32_t i = 0; i < count; ++i)
     {
         printf("%u", (v >> (count - 1 - i)) & 1);
         if( i == 31 )
@@ -626,8 +626,8 @@ static void _jc_qre_draw_data(JCQRCodeInternal* qr)
 
     uint32_t bitindex = 0;
 
-    int upwards = 1;
-    int x = size - 1;
+    uint32_t upwards = 1;
+    uint32_t x = size - 1;
 
     printf("qr->interleavedsize * 8: %u\n", qr->interleavedsize * 8);
 
@@ -639,7 +639,7 @@ static void _jc_qre_draw_data(JCQRCodeInternal* qr)
 
     while( bitindex < qr->interleavedsize * 8 )
     {
-        for( int i = 0; i < size * 2; ++i )
+        for( uint32_t i = 0; i < size * 2; ++i )
         {
             uint32_t xx = x - (i & 1);
             uint32_t y = upwards ? size - 1 - (i >> 1) : (i >> 1);
@@ -757,6 +757,7 @@ static void _jc_qre_draw_mask(JCQRCodeInternal* qr, uint32_t pattern_mask)
 
 static inline uint32_t _jc_qre_calc_penalty(JCQRCodeInternal* qr)
 {
+    (void)qr;
     return 0;
 }
 
