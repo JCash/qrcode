@@ -35,8 +35,8 @@ if NOT DEFINED VCINSTALLDIR (
 
 mkdir build
 
-cl.exe -c /Isrc src/stb_wrapper.c -Fobuild/stb_wrapper.obj
-cl.exe /O2 /D_CRT_SECURE_NO_WARNINGS /W4 /Isrc build/stb_wrapper.obj src/encode.c /link /out:.\build\qrencode.exe
+cl.exe /nologo /O2 /c /Isrc src/stb_wrapper.c -Fobuild/stb_wrapper.obj
+cl.exe /nologo /O2 /EHsc /D_CRT_SECURE_NO_WARNINGS /W4 /Isrc build/stb_wrapper.obj src/encode.c /link /out:.\build\qrencode.exe
 
 del *.obj
 

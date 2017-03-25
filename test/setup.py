@@ -51,4 +51,13 @@ if __name__ == '__main__':
     for k, v in os.environ.iteritems():
         print(k, "=", v)
 
+    print("")
+    print("CL.EXE:")
+
+    os.system('cl.exe')
+
+
+    print("")
+
+
     install_zxing()
