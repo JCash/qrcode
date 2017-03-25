@@ -8,7 +8,7 @@
 # qrcode
 A simple C/C++ lib to generate QR code images
 
-
+![50 points](test/images/helloworld.png)
 
 # Reference material
 
