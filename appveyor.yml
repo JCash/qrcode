@@ -9,7 +9,6 @@ before_build:
   - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
 
 build_script:
-  - cl.exe foobar.c
   - compile_cl.bat
   - cd test
   - setup.bat

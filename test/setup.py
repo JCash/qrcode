@@ -13,8 +13,6 @@ def run(cmd, cwd=None):
     p.wait()
     print(p.stdout.read())
     print(p.stderr.read())
-    #if not p.returncode:
-    #    raise Exception("Failed")
 
 def curl(url, path):
     cmd = 'curl -L %s -o %s' % (url,path)
@@ -51,16 +49,10 @@ def install_zxing():
 
 if __name__ == '__main__':
 
-    print("ENV:")
-    for k, v in os.environ.iteritems():
-        print(k, "=", v)
-
-    print("")
-    print("CL.EXE:")
-
-    os.system('cl.exe')
-
-
-    print("")
+    if sys.platform == 'win32':
+        print("")
+        print("CL.EXE:")
+        run('cl.exe test2.c')
+        print("")
 
     install_zxing()
