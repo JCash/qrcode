@@ -4,7 +4,7 @@ import sys, os, subprocess
 # 
 
 ZXING_VERSION='00f634024ceeee591f54e6984ea7dd666fab22ae'
-ZXING_URL='https://github.com/zxing/zxing/archive/%s.zip' % 00f634024ceeee591f54e6984ea7dd666fab22ae
+ZXING_URL='https://github.com/zxing/zxing/archive/%s.zip' % ZXING_VERSION
 ZXING_ZIP='zxing.zip'
 ZXING_EXE='build/zxing'
 
