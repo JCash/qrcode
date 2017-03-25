@@ -9,7 +9,7 @@ ZXING_ZIP='zxing.zip'
 ZXING_EXE='build/zxing'
 
 def run(cmd, cwd=None):
-    p = subprocess.Popen(cmd.split(), cwd=cwd)
+    p = subprocess.Popen(cmd.split(), cwd=cwd, env)
     p.wait()
 
 def curl(url, path):
@@ -46,4 +46,9 @@ def install_zxing():
     cp(src, ZXING_EXE)
 
 if __name__ == '__main__':
+
+    print("ENV:")
+    for k, v in os.env:
+        print(k, "=", v)
+
     install_zxing()
