@@ -9,7 +9,7 @@ ZXING_ZIP='zxing.zip'
 ZXING_EXE='build/zxing'
 
 def run(cmd, cwd=None):
-    p = subprocess.Popen(cmd.split(), cwd=cwd, env)
+    p = subprocess.Popen(cmd.split(), cwd=cwd)
     p.wait()
 
 def curl(url, path):
