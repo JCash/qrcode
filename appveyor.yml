@@ -7,7 +7,8 @@ install:
 build_script:
   - compile_cl.bat
   - cd test
-  - python.exe setup.py
+  - setup.bat
+  - compile_cl.bat
 
 test_script:
   - build\testencode.exe
