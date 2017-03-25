@@ -4,16 +4,16 @@ import sys, os, subprocess
 # 
 
 ZXING_VERSION='00f634024ceeee591f54e6984ea7dd666fab22ae'
-ZXING_ZIP='%s.zip' % ZXING_VERSION
-ZXING_URL='https://github.com/zxing/zxing/archive/%s' % ZXING_ZIP
+ZXING_URL='https://github.com/zxing/zxing/archive/%s.zip' % 00f634024ceeee591f54e6984ea7dd666fab22ae
+ZXING_ZIP='zxing.zip'
 ZXING_EXE='build/zxing'
 
 def run(cmd, cwd=None):
     p = subprocess.Popen(cmd.split(), cwd=cwd)
     p.wait()
 
-def wget(url):
-    cmd = 'wget %s' % (url,)
+def curl(url, path):
+    cmd = 'curl -L %s -o %s' % (url,path)
     run(cmd)
 
 def unzip(src, dst):
@@ -34,7 +34,7 @@ def install_zxing():
         print("zxing already built")
         return
     if not os.path.exists(ZXING_ZIP):
-        wget(ZXING_URL)
+        curl(ZXING_URL, ZXING_ZIP)
     if not os.path.exists("zxing"):
         unzip(ZXING_ZIP, "zxing")
 
