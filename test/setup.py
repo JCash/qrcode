@@ -59,5 +59,5 @@ if __name__ == '__main__':
 
     print("")
 
-
-    install_zxing()
+    #install_zxing()
+    
