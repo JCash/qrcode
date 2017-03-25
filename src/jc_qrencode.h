@@ -291,10 +291,10 @@ static inline uint32_t _jc_qre_guess_type_numeric(const uint8_t* input, uint32_t
     {
         if( input[i] < '0' || input[i] > '9' )
         {
-            return false;
+            return 0;
         }
     }
-    return true;
+    return 1;
 }
 
 
@@ -305,10 +305,10 @@ static inline uint32_t _jc_qre_guess_type_alphanumeric(const uint8_t* input, uin
         uint8_t c = input[i];
         if( c < ' ' || c > 'Z' || JC_QRE_ALPHANUMERIC_MAPPINGS[c - ' '] == -1 )
         {
-            return false;
+            return 0;
         }
     }
-    return true;
+    return 1;
 }
 
 static inline uint8_t _jc_qre_guess_type(const uint8_t* input, uint32_t inputlength)
@@ -596,9 +596,9 @@ static inline void _jc_qre_draw_function_module(JCQRCodeInternal* qr, int32_t x,
     qr->image[y * 256 + x] = black ? 0 : 255;
     qr->image_fun[y * 256 + x] = 1;
 }
-static inline bool _jc_qre_is_function_module(JCQRCodeInternal* qr, int32_t x, int32_t y)
+static inline uint32_t _jc_qre_is_function_module(JCQRCodeInternal* qr, int32_t x, int32_t y)
 {
-    return qr->image_fun[y * 256 + x] != 0;
+    return qr->image_fun[y * 256 + x] != 0 ? 1 : 0;
 }
 
 static void _jc_qre_draw_finder_pattern(JCQRCodeInternal* qr, int32_t x, int32_t y)
@@ -683,18 +683,8 @@ static void _jc_qre_draw_finder_patterns(JCQRCodeInternal* qr)
         //_jc_qre_draw_finder_pattern(qr, 3, size-4);        
     }
 
-/*
-    // Reserve format info areas
-    for( uint32_t i = 0; i < 8; ++i )
-    {
-        qr->image_fun[(size - i - 1) * 256 + 8] = 1; // bottom left
-        qr->image_fun[8 * 256 + (size - i - 1)] = 1; // top right
-        qr->image_fun[8 * 256 + i] = 1; // topleft, lower
-        qr->image_fun[i * 256 + 8] = 1; // topleft, lower
-    }*/
-
     // the dark module
-    _jc_qre_draw_function_module(qr, 8, (4 * qr->qrcode.version) + 9, true);
+    _jc_qre_draw_function_module(qr, 8, (4 * qr->qrcode.version) + 9, 1);
 }
 
 static void _jc_qre_draw_format(JCQRCodeInternal* qr, uint32_t pattern_mask)

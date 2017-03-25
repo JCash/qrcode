@@ -4,6 +4,12 @@
 #include <string.h>
 #include <unistd.h>
 
+extern int wrap_stbi_write_png(char const *filename, int w, int h, int comp, const void *data, int stride_in_bytes);
+
+#define JC_QRENCODE_IMPLEMENTATION
+#include "jc_qrencode.h"
+
+
 static void Usage()
 {
     printf("Usage: qrencode [options] [text]\n");
@@ -33,6 +39,37 @@ static void read_input(char* buffer, uint32_t buffersize, uint32_t* length)
     *length = l;
 }
 */
+
+static int save_image(JCQRCode* qr, const char* path)
+{
+    int32_t size = qr->size;
+
+    int32_t border = 2;
+    int32_t scale = 8;
+    int32_t newsize = scale*(size + 2 * border);
+    uint8_t* large = (uint8_t*)malloc( newsize * newsize );
+
+    memset(large, 255, newsize*newsize);
+
+    for( int y = 0; y < size*scale; ++y )
+    {
+        for( int x = 0; x < size*scale; ++x )
+        {
+            uint8_t module = qr->data[(y/scale)*256 + (x/scale)];
+            large[(y + scale*border) * newsize + x + scale*border] = module;
+        }
+    }
+
+    int result = wrap_stbi_write_png(path, newsize, newsize, 1, large, newsize);
+    free(large);
+    
+    if(result)
+        printf("Wrote to %s\n", path);
+    else
+        printf("Failed to write to %s\n", path);
+    return result;
+}
+
 
 static void read_input(const char* path, char* buffer, uint32_t buffersize, uint32_t* length)
 {
@@ -95,7 +132,7 @@ int main(int argc, const char** argv)
         if(strcmp(argv[i], "-i") == 0)
         {
             if( i+1 < argc )
-                inputfile = argv[i+1];
+                inputfile = argv[++i];
             else
             {
                 Usage();
@@ -105,7 +142,7 @@ int main(int argc, const char** argv)
         else if(strcmp(argv[i], "-o") == 0)
         {
             if( i+1 < argc )
-                outputfile = argv[i+1];
+                outputfile = argv[++i];
             else
             {
                 Usage();
@@ -115,7 +152,7 @@ int main(int argc, const char** argv)
         else if(strcmp(argv[i], "-w") == 0)
         {
             if( i+1 < argc )
-                width = (int)atol(argv[i+1]);
+                width = (int)atol(argv[++i]);
             else
             {
                 Usage();
@@ -125,7 +162,7 @@ int main(int argc, const char** argv)
         else if(strcmp(argv[i], "-h") == 0)
         {
             if( i+1 < argc )
-                height = (int)atol(argv[i+1]);
+                height = (int)atol(argv[++i]);
             else
             {
                 Usage();
@@ -186,72 +223,16 @@ int main(int argc, const char** argv)
 
     printf("TEXT: '%s'\n", g_Text);
 
-/*
-    size_t imagesize = (size_t)(width*height*3);
-    unsigned char* image = (unsigned char*)malloc(imagesize);
-    memset(image, 0, imagesize);
 
-    unsigned char color_pt[] = {255, 255, 255};
-    unsigned char color_line[] = {220, 220, 220};
-
-    if( mode == 0 )
+    JCQRCode* qr = jc_qrencode((const uint8_t*)g_Text, strlen(g_Text), JC_QRE_ERROR_CORRECTION_LEVEL_QUARTILE);
+    if( !qr )
     {
-        jcv_diagram diagram;
-        memset(&diagram, 0, sizeof(jcv_diagram));
-        jcv_diagram_generate(count, (const jcv_point*)points, width, height, &diagram );
-
-        // If you want to draw triangles, or relax the diagram,
-        // you can iterate over the sites and get all edges easily
-        const jcv_site* sites = jcv_diagram_get_sites( &diagram );
-        for( int i = 0; i < diagram.numsites; ++i )
-        {
-            const jcv_site* site = &sites[i];
-
-            srand((unsigned int)site->index); // for generating colors for the triangles
-
-            unsigned char color_tri[3];
-            unsigned char basecolor = 120;
-            color_tri[0] = basecolor + (unsigned char)(rand() % (235 - basecolor));
-            color_tri[1] = basecolor + (unsigned char)(rand() % (235 - basecolor));
-            color_tri[2] = basecolor + (unsigned char)(rand() % (235 - basecolor));
-
-            const jcv_graphedge* e = site->edges;
-            while( e )
-            {
-                draw_triangle( &site->p, &e->pos[0], &e->pos[1], image, width, height, 3, color_tri);
-                e = e->next;
-            }
-        }
-
-        // If all you need are the edges
-        const jcv_edge* edge = jcv_diagram_get_edges( &diagram );
-        while( edge )
-        {
-            draw_line((int)edge->pos[0].x, (int)edge->pos[0].y, (int)edge->pos[1].x, (int)edge->pos[1].y, image, width, height, 3, color_line);
-            edge = edge->next;
-        }
-
-        jcv_diagram_free( &diagram );
+        fprintf(stderr, "Failed to encode text\n");
+        return 1;
     }
 
-    // flip image
-    int stride = width*3;
-    uint8_t* row = (uint8_t*)malloc((size_t)stride);
-    for( int y = 0; y < height/2; ++y )
-    {
-        memcpy(row, &image[y*stride], (size_t)stride);
-        memcpy(&image[y*stride], &image[(height-1-y)*stride], (size_t)stride);
-        memcpy(&image[(height-1-y)*stride], row, (size_t)stride);
-    }
-
-    char path[512];
-    sprintf(path, "%s", outputfile);
-    stbi_write_png(path, width, height, 3, image, stride);
-    printf("wrote %s\n", path);
-
-    free(image);
-
-*/
+    save_image(qr, outputfile);
+    free(qr);
 
     return 0;
 }

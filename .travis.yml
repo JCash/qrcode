@@ -4,10 +4,6 @@ compiler:
 
 matrix:
   include:
-    - os: osx
-      before_install:
-        - brew install python
-
     - os: linux
       before_install:
         - sudo apt-get install python2.7
@@ -18,3 +14,4 @@ script:
   - ./compile_clang.sh
   - ./build/testencode
   - python setup.py
+  - python run.py
