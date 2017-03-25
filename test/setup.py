@@ -48,7 +48,7 @@ def install_zxing():
 if __name__ == '__main__':
 
     print("ENV:")
-    for k, v in os.env:
+    for k, v in os.environ.iteritems():
         print(k, "=", v)
 
     install_zxing()
