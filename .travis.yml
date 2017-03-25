@@ -2,15 +2,19 @@ language: cpp
 compiler:
   - clang
 
-os:
-  - linux
-  - osx
+matrix:
+  include:
+    - os: osx
+      before_install:
+        - brew install python2.7
 
-before_install:
-  - sudo apt-get install python2.7
+    - os: linux
+      before_install:
+        - sudo apt-get install python2.7
 
 script:
   - ./compile_clang.sh
   - cd test
   - ./compile_clang.sh
   - ./build/testencode
+  - python setup.py
