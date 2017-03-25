@@ -202,8 +202,6 @@ static inline uint32_t _jc_qre_bitbuffer_write(uint8_t* buffer, uint32_t buffers
 
     for( uint32_t i = 0; i < numbits; ++i, ++pos)
     {
-        uint8_t currentvalue = buffer[pos / 8];
-
         uint32_t targetindex = 7 - pos & 0x7;
 
         uint32_t ii = numbits - 1 - i;
@@ -232,11 +230,8 @@ static inline uint32_t _jc_qre_bitbuffer_append(uint8_t* buffer, uint32_t buffer
     uint32_t pos = *cursor; // in bits
     for( uint32_t i = 0; i < numbits; ++i, ++pos )
     {
-        uint8_t currentvalue = buffer[pos / 8];
-
         uint32_t targetindex = 7 - pos & 0x7;
 
-        uint32_t inputindex = i & 0x7;
         uint8_t inputbit = input[i / 8] >> (7 - (i & 7)) & 1;
 
         // clear the target bit and OR in the input bit
@@ -627,7 +622,7 @@ static void _jc_qre_draw_finder_pattern(JCQRCodeInternal* qr, int32_t x, int32_t
 
 static void _jc_qre_draw_data(JCQRCodeInternal* qr)
 {
-    int32_t size = qr->qrcode.size;
+    uint32_t size = qr->qrcode.size;
 
     uint32_t bitindex = 0;
 
@@ -665,9 +660,9 @@ static void _jc_qre_draw_data(JCQRCodeInternal* qr)
 
 static void _jc_qre_draw_finder_patterns(JCQRCodeInternal* qr)
 {
-    int32_t size = qr->qrcode.size;
+    uint32_t size = qr->qrcode.size;
 
-    for( uint32_t i = 0; i < size; ++i )
+    for( uint32_t i = 0; i < (uint32_t)size; ++i )
     {
         _jc_qre_draw_function_module(qr, i, 6, i % 2 == 0);
         _jc_qre_draw_function_module(qr, 6, i, i % 2 == 0);
@@ -689,7 +684,7 @@ static void _jc_qre_draw_finder_patterns(JCQRCodeInternal* qr)
 
 static void _jc_qre_draw_format(JCQRCodeInternal* qr, uint32_t pattern_mask)
 {
-    int32_t size = qr->qrcode.size;
+    uint32_t size = qr->qrcode.size;
     uint32_t format = JC_QRE_FORMAT_BITS[qr->qrcode.ecl * 8 + pattern_mask];
 
 printf("version: %u  ecl: %d\n", qr->qrcode.version, qr->qrcode.ecl);
@@ -745,7 +740,7 @@ static inline uint32_t _jc_qre_is_masked(uint32_t x, uint32_t y, uint32_t patter
 
 static void _jc_qre_draw_mask(JCQRCodeInternal* qr, uint32_t pattern_mask)
 {
-    int32_t size = qr->qrcode.size;
+    uint32_t size = qr->qrcode.size;
     for( uint32_t y = 0; y < size; ++y )
     {
         for( uint32_t x = 0; x < size; ++x )
@@ -767,7 +762,7 @@ static inline uint32_t _jc_qre_calc_penalty(JCQRCodeInternal* qr)
 
 static void _jc_qre_draw_version(JCQRCodeInternal* qr)
 {
-    int32_t size = qr->qrcode.size;
+    uint32_t size = qr->qrcode.size;
     if( qr->qrcode.version >= 7 )
     {
         for( uint32_t x = 0; x < 6; ++x )

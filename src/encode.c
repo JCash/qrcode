@@ -97,7 +97,7 @@ static void read_input(const char* path, char* buffer, uint32_t buffersize, uint
         while( !feof(file) )
         {
             size_t num_read = fread((void*)&buffer[l], 1, 64, file);
-            l += num_read;
+            l += (uint32_t)num_read;
             if( l > buffersize )
             {
                 *length = 0xFFFFFFFF;
@@ -198,7 +198,7 @@ int main(int argc, const char** argv)
             }
 
             memcpy(&g_Text[g_TextLength], argv[i], len);
-            g_TextLength += len;
+            g_TextLength += (uint32_t)len;
             firsttext = 0;
         }
     }
@@ -223,7 +223,7 @@ int main(int argc, const char** argv)
     printf("TEXT: '%s'\n", g_Text);
 
 
-    JCQRCode* qr = jc_qrencode((const uint8_t*)g_Text, strlen(g_Text), JC_QRE_ERROR_CORRECTION_LEVEL_QUARTILE);
+    JCQRCode* qr = jc_qrencode((const uint8_t*)g_Text, (uint32_t)strlen(g_Text), JC_QRE_ERROR_CORRECTION_LEVEL_QUARTILE);
     if( !qr )
     {
         fprintf(stderr, "Failed to encode text\n");

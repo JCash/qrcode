@@ -9,8 +9,12 @@ ZXING_ZIP='zxing.zip'
 ZXING_EXE='build/zxing'
 
 def run(cmd, cwd=None):
-    p = subprocess.Popen(cmd.split(), cwd=cwd)
+    p = subprocess.Popen(cmd.split(), cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     p.wait()
+    print(p.stdout.read())
+    print(p.stderr.read())
+    if not p.returncode:
+        raise Exception("Failed")
 
 def curl(url, path):
     cmd = 'curl -L %s -o %s' % (url,path)
@@ -59,5 +63,4 @@ if __name__ == '__main__':
 
     print("")
 
-    #install_zxing()
-    
+    install_zxing()
