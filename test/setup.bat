@@ -1,36 +1,17 @@
 
 echo off
 
-if NOT DEFINED VCINSTALLDIR (
-    if exist "C:\Program Files (x86)\Microsoft Visual Studio 15.0\VC\vcvarsall.bat" (
-        call "C:\Program Files (x86)\Microsoft Visual Studio 15.0\VC\vcvarsall.bat" amd64
-        echo "USING VISUAL STUDIO 15"
-    )
-)
+call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\vcvars32.bat"
+curl -L https://github.com/zxing/zxing/archive/00f634024ceeee591f54e6984ea7dd666fab22ae.zip -o zxing.zip
+unzip -q zxing.zip -d zxing
 
-if NOT DEFINED VCINSTALLDIR (
-    if exist "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" (
-        call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
-        echo "USING VISUAL STUDIO 14"
-    )
-)
+mkdir zxing\zxing-00f634024ceeee591f54e6984ea7dd666fab22ae\cpp\build
+pushd zxing\zxing-00f634024ceeee591f54e6984ea7dd666fab22ae\cpp\build
 
-if NOT DEFINED VCINSTALLDIR (
-    if exist "C:\Program Files (x86)\Microsoft Visual Studio 13.0\VC\vcvarsall.bat" (
-        call "C:\Program Files (x86)\Microsoft Visual Studio 13.0\VC\vcvarsall.bat" amd64
-        echo "USING VISUAL STUDIO 13"
-    )
-)
+cmake -G "NMake Makefiles" ..
+nmake
 
-if NOT DEFINED VCINSTALLDIR (
-    if exist "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" (
-        call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" amd64
-        echo "USING VISUAL STUDIO 12"
-    )
-)
+popd
 
-if NOT DEFINED VCINSTALLDIR (
-    echo "No compatible visual studio found! run vcvarsall.bat first!"
-)
-
-python.exe setup.py
+mkdir build
+cp zxing\zxing-00f634024ceeee591f54e6984ea7dd666fab22ae\cpp\build\zxing.exe build\zxing.exe
