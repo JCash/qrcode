@@ -6,8 +6,8 @@ install:
   - cd test
   - curl -L https://github.com/zxing/zxing/archive/00f634024ceeee591f54e6984ea7dd666fab22ae.zip -o zxing.zip
   - unzip -q zxing.zip -d zxing
-  - mkdir zxing/zxing-00f634024ceeee591f54e6984ea7dd666fab22ae/cpp/build
-  - cd zxing/zxing-00f634024ceeee591f54e6984ea7dd666fab22ae/cpp/build
+  - mkdir zxing\zxing-00f634024ceeee591f54e6984ea7dd666fab22ae\cpp\build
+  - cd zxing\zxing-00f634024ceeee591f54e6984ea7dd666fab22ae\cpp\build
   - if "%platform%"=="Win32" set CMAKE_GENERATOR_NAME=Visual Studio 14 2015
   - if "%platform%"=="x64"   set CMAKE_GENERATOR_NAME=Visual Studio 14 2015 Win64
   - cmake -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%configuration% ..
