@@ -18,7 +18,7 @@ install:
   - mkdir build
   - cp zxing\zxing-00f634024ceeee591f54e6984ea7dd666fab22ae\cpp\build\zxing.exe build\zxing.exe
   - cd ..
-  - unset VCINSTALLDIR
+  - set VCINSTALLDIR=
 
 
 build_script:
