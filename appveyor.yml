@@ -8,9 +8,11 @@ install:
   - unzip -q zxing.zip -d zxing
   - mkdir zxing\zxing-00f634024ceeee591f54e6984ea7dd666fab22ae\cpp\build
   - cd zxing\zxing-00f634024ceeee591f54e6984ea7dd666fab22ae\cpp\build
-  - if "%platform%"=="Win32" set CMAKE_GENERATOR_NAME=Visual Studio 14 2015
-  - if "%platform%"=="x64"   set CMAKE_GENERATOR_NAME=Visual Studio 14 2015 Win64
-  - cmake -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - rem if "%platform%"=="Win32" set CMAKE_GENERATOR_NAME=Visual Studio 14 2015
+  - rem if "%platform%"=="x64"   set CMAKE_GENERATOR_NAME=Visual Studio 14 2015 Win64
+  - rem cmake -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%configuration% ..
+  - cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release ..
+  - nmake
 
 
 build_script:
