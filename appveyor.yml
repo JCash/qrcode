@@ -2,8 +2,11 @@ platform:
   - x86
   - x64
 
+configuration:
+  - Release
+
 install:
-  - call "C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\vcvarsall.bat" x86_amd64
+  - call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" x86_amd64
   - cd test
   - curl -L https://github.com/zxing/zxing/archive/00f634024ceeee591f54e6984ea7dd666fab22ae.zip -o zxing.zip
   - unzip -q zxing.zip -d zxing
@@ -12,7 +15,7 @@ install:
   - rem if "%PLATFORM%"=="Win32" set CMAKE_GENERATOR_NAME=Visual Studio 14 2015
   - rem if "%PLATFORM%"=="x64"   set CMAKE_GENERATOR_NAME=Visual Studio 14 2015 Win64
   - rem cmake -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%CONFIGURATION% ..
-  - cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=%CONFIGURATION% ..
+  - cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=$(configuration) ..
   - nmake
 
 
