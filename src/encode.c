@@ -227,7 +227,7 @@ int main(int argc, const char** argv)
 
     printf("TEXT: '%s'\n", g_Text);
 
-    JCQRCode* qr = jc_qrencode((const uint8_t*)g_Text, (uint32_t)strlen(g_Text), JC_QRE_ERROR_CORRECTION_LEVEL_QUARTILE);
+    JCQRCode* qr = jc_qrencode((const uint8_t*)g_Text, (uint32_t)strlen(g_Text));
     if( !qr )
     {
         fprintf(stderr, "Failed to encode text\n");
