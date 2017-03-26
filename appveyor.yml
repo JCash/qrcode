@@ -9,8 +9,8 @@ configuration:
 build_script:
   - compile_cl.bat
   - cd test
-  - setup.bat
   - compile_cl.bat
+  - setup.bat
 
 after_build:
   - 7z a qrencode.zip %APPVEYOR_BUILD_FOLDER%\build\qrencode.exe

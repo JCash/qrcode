@@ -35,7 +35,7 @@ if NOT DEFINED VCINSTALLDIR (
 
 mkdir build
 
-cl.exe /nologo /O2 /EHsc /D_CRT_SECURE_NO_WARNINGS /I../src /I. testencode.c /link /out:.\build\testencode.exe
+cl.exe /nologo /O2 /D_CRT_SECURE_NO_WARNINGS /I../src /I. testencode.c /link /out:.\build\testencode.exe
 
 del *.obj
 
