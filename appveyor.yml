@@ -6,7 +6,8 @@ configuration:
   - Release
 
 install:
-  - call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\vcvarsall.bat" x86_amd64
+  - call "C:\Program Files (x86)\Microsoft Visual Studio 10.0\VC\bin\amd64\vcvars64.bat"
+  - rem call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
   - cd test
   - curl -L https://github.com/zxing/zxing/archive/00f634024ceeee591f54e6984ea7dd666fab22ae.zip -o zxing.zip
   - unzip -q zxing.zip -d zxing
