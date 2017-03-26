@@ -63,5 +63,4 @@ def run_tests():
 
 if __name__ == '__main__':
     ret = run_tests()
-    os.exit(ret)
-    
+    sys.exit(ret)
