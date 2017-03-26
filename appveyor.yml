@@ -13,6 +13,7 @@ build_script:
   - setup.bat
 
 after_build:
+  - cd %APPVEYOR_BUILD_FOLDER%
   - 7z a qrencode.zip %APPVEYOR_BUILD_FOLDER%\build\qrencode.exe
 
 test_script:
