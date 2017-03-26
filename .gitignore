@@ -32,3 +32,4 @@ build
 test/build
 test/zxing
 test/*.zip
+test/*.png

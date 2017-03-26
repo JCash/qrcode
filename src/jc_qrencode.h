@@ -1,3 +1,7 @@
+/*
+*/
+
+
 // references for the Reed-Solomon error correction
 // https://en.wikiversity.org/wiki/Reed%E2%80%93Solomon_codes_for_coders
 // https://github.com/qsantos/qrcode/blob/master/rs.c
@@ -10,7 +14,7 @@
 
 #include <stdint.h>
 
-#if defined(__LP64__) || defined(_WIN64) || (defined(__x86_64__) &&     !defined(__ILP32__) ) || defined(_M_X64) || defined(__ia64) || defined (_M_IA64) || defined(__aarch64__) || defined(__powerpc64__)
+#if defined(__LP64__) || defined(_WIN64) || (defined(__x86_64__) && !defined(__ILP32__) ) || defined(_M_X64) || defined(__ia64) || defined (_M_IA64) || defined(__aarch64__) || defined(__powerpc64__)
     #define JC_QRE_IS64BIT 1
     #define JC_QRE_PAD(_X_) uint8_t _pad[_X_]
 #else
@@ -22,6 +26,9 @@ const static uint32_t JC_QRE_ERROR_CORRECTION_LEVEL_MEDIUM     = 1;
 const static uint32_t JC_QRE_ERROR_CORRECTION_LEVEL_QUARTILE   = 2;
 const static uint32_t JC_QRE_ERROR_CORRECTION_LEVEL_HIGH       = 3;
 
+static const uint32_t JC_QRE_MIN_VERSION = 1;
+static const uint32_t JC_QRE_MAX_VERSION = 40;
+
 typedef struct _JCQRCode
 {
     uint8_t* data;      // The modules of the qrcode
@@ -31,9 +38,32 @@ typedef struct _JCQRCode
     uint32_t _pad;
 } JCQRCode;
 
-/**
+/** Creates a QR Code
+* Automatically selects the smallest version that fits the data.
+* Then it also selects the highest possible error correction level withing that version, that still fits the data.
+*
+* @input Byte array
+* @inputlength Size of input array
+* @return 0 if the qr code couldn't be created. The returned qrcode must be deallocated with free()
 */
-JCQRCode* jc_qrencode(const uint8_t* input, uint32_t inputlength, uint32_t ecl);
+JCQRCode* jc_qrencode(const uint8_t* input, uint32_t inputlength);
+
+/** Creates a QR Code
+* If you know which version and error collection level you need
+*
+* @input Byte array
+* @inputlength Size of input array
+* @version Version [1,40]
+* @ecl Error correction level (JC_QRE_ERROR_CORRECTION_LEVEL_LOW, JC_QRE_ERROR_CORRECTION_LEVEL_MEDIUM, JC_QRE_ERROR_CORRECTION_LEVEL_QUARTILE, JC_QRE_ERROR_CORRECTION_LEVEL_HIGH)
+* @return 0 if the qr code couldn't be created. The returned qrcode must be deallocated with free()
+*/
+JCQRCode* jc_qrencode_version(const uint8_t* input, uint32_t inputlength, uint32_t version, uint32_t ecl);
+
+// ..
+// jc_qrencode_create()
+// jc_qrencode_add_segment()
+// ...
+// jc_qrencode_encode()
 
 
 #if defined(JC_QRENCODE_IMPLEMENTATION)
@@ -53,9 +83,6 @@ static void print_bits(const char* tag, uint32_t v, uint32_t count)
     printf("\n");
 }
 
-
-static const uint32_t JC_QRE_MIN_VERSION = 1;
-static const uint32_t JC_QRE_MAX_VERSION = 40;
 
 static const uint8_t JC_QRE_INPUT_TYPE_NUMERIC         = 0;
 static const uint8_t JC_QRE_INPUT_TYPE_ALPHANUMERIC    = 1;
@@ -84,30 +111,6 @@ static const uint32_t JC_QRE_ERROR_CORRECTION_CODEWORD_COUNT[] = {
        0,   10,   16,   26,   18,   24,   16,   18,   22,   22,   26,   30,   22,   22,   24,   24,   28,   28,   26,   26,   26,   26,   28,   28,   28,   28,   28,   28,   28,   28,   28,   28,   28,   28,   28,   28,   28,   28,   28,   28,   28,
        0,   13,   22,   18,   26,   18,   24,   18,   22,   20,   24,   28,   26,   24,   20,   30,   24,   28,   28,   26,   30,   28,   30,   30,   30,   30,   28,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,
        0,   17,   28,   22,   16,   22,   28,   26,   26,   24,   28,   24,   28,   22,   24,   24,   30,   28,   28,   26,   28,   30,   24,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,
-};
-static const uint32_t JC_QRE_CAPACITY_NUMERIC[] = {
-       0,   41,   77,  127,  187,  255,  322,  370,  461,  552,  652,  772,  883, 1022, 1101, 1250, 1408, 1548, 1725, 1903, 2061, 2232, 2409, 2620, 2812, 3057, 3283, 3517, 3669, 3909, 4158, 4417, 4686, 4965, 5253, 5529, 5836, 6153, 6479, 6743, 7089,
-       0,   34,   63,  101,  149,  202,  255,  293,  365,  432,  513,  604,  691,  796,  871,  991, 1082, 1212, 1346, 1500, 1600, 1708, 1872, 2059, 2188, 2395, 2544, 2701, 2857, 3035, 3289, 3486, 3693, 3909, 4134, 4343, 4588, 4775, 5039, 5313, 5596,
-       0,   27,   48,   77,  111,  144,  178,  207,  259,  312,  364,  427,  489,  580,  621,  703,  775,  876,  948, 1063, 1159, 1224, 1358, 1468, 1588, 1718, 1804, 1933, 2085, 2181, 2358, 2473, 2670, 2805, 2949, 3081, 3244, 3417, 3599, 3791, 3993,
-       0,   17,   34,   58,   82,  106,  139,  154,  202,  235,  288,  331,  374,  427,  468,  530,  602,  674,  746,  813,  919,  969, 1056, 1108, 1228, 1286, 1425, 1501, 1581, 1677, 1782, 1897, 2022, 2157, 2301, 2361, 2524, 2625, 2735, 2927, 3057,
-};
-static const uint32_t JC_QRE_CAPACITY_ALPHANUMERIC[] = {
-       0,   25,   47,   77,  114,  154,  195,  224,  279,  335,  395,  468,  535,  619,  667,  758,  854,  938, 1046, 1153, 1249, 1352, 1460, 1588, 1704, 1853, 1990, 2132, 2223, 2369, 2520, 2677, 2840, 3009, 3183, 3351, 3537, 3729, 3927, 4087, 4296,
-       0,   20,   38,   61,   90,  122,  154,  178,  221,  262,  311,  366,  419,  483,  528,  600,  656,  734,  816,  909,  970, 1035, 1134, 1248, 1326, 1451, 1542, 1637, 1732, 1839, 1994, 2113, 2238, 2369, 2506, 2632, 2780, 2894, 3054, 3220, 3391,
-       0,   16,   29,   47,   67,   87,  108,  125,  157,  189,  221,  259,  296,  352,  376,  426,  470,  531,  574,  644,  702,  742,  823,  890,  963, 1041, 1094, 1172, 1263, 1322, 1429, 1499, 1618, 1700, 1787, 1867, 1966, 2071, 2181, 2298, 2420,
-       0,   10,   20,   35,   50,   64,   84,   93,  122,  143,  174,  200,  227,  259,  283,  321,  365,  408,  452,  493,  557,  587,  640,  672,  744,  779,  864,  910,  958, 1016, 1080, 1150, 1226, 1307, 1394, 1431, 1530, 1591, 1658, 1774, 1852,
-};
-static const uint32_t JC_QRE_CAPACITY_BYTE[] = {
-       0,   17,   32,   53,   78,  106,  134,  154,  192,  230,  271,  321,  367,  425,  458,  520,  586,  644,  718,  792,  858,  929, 1003, 1091, 1171, 1273, 1367, 1465, 1528, 1628, 1732, 1840, 1952, 2068, 2188, 2303, 2431, 2563, 2699, 2809, 2953,
-       0,   14,   26,   42,   62,   84,  106,  122,  152,  180,  213,  251,  287,  331,  362,  412,  450,  504,  560,  624,  666,  711,  779,  857,  911,  997, 1059, 1125, 1190, 1264, 1370, 1452, 1538, 1628, 1722, 1809, 1911, 1989, 2099, 2213, 2331,
-       0,   11,   20,   32,   46,   60,   74,   86,  108,  130,  151,  177,  203,  241,  258,  292,  322,  364,  394,  442,  482,  509,  565,  611,  661,  715,  751,  805,  868,  908,  982, 1030, 1112, 1168, 1228, 1283, 1351, 1423, 1499, 1579, 1663,
-       0,    7,   14,   24,   34,   44,   58,   64,   84,   98,  119,  137,  155,  177,  194,  220,  250,  280,  310,  338,  382,  403,  439,  461,  511,  535,  593,  625,  658,  698,  742,  790,  842,  898,  958,  983, 1051, 1093, 1139, 1219, 1273,
-};
-static const uint32_t JC_QRE_CAPACITY_KANJI[] = {
-       0,   10,   20,   32,   48,   65,   82,   95,  118,  141,  167,  198,  226,  262,  282,  320,  361,  397,  442,  488,  528,  572,  618,  672,  721,  784,  842,  902,  940, 1002, 1066, 1132, 1201, 1273, 1347, 1417, 1496, 1577, 1661, 1729, 1817,
-       0,    8,   16,   26,   38,   52,   65,   75,   93,  111,  131,  155,  177,  204,  223,  254,  277,  310,  345,  384,  410,  438,  480,  528,  561,  614,  652,  692,  732,  778,  843,  894,  947, 1002, 1060, 1113, 1176, 1224, 1292, 1362, 1435,
-       0,    7,   12,   20,   28,   37,   45,   53,   66,   80,   93,  109,  125,  149,  159,  180,  198,  224,  243,  272,  297,  314,  348,  376,  407,  440,  462,  496,  534,  559,  604,  634,  684,  719,  756,  790,  832,  876,  923,  972, 1024,
-       0,    4,    8,   15,   21,   27,   36,   39,   52,   60,   74,   85,   96,  109,  120,  136,  154,  173,  191,  208,  235,  248,  270,  284,  315,  330,  365,  385,  405,  430,  457,  486,  518,  553,  590,  605,  647,  673,  701,  750,  784,
 };
 static const uint32_t JC_QRE_CHARACTER_COUNT_BIT_SIZE[] = {
        0,   10,   10,   10,   10,   10,   10,   10,   10,   10,   12,   12,   12,   12,   12,   12,   12,   12,   12,   12,   12,   12,   12,   12,   12,   12,   12,   14,   14,   14,   14,   14,   14,   14,   14,   14,   14,   14,   14,   14,   14,
@@ -152,6 +155,49 @@ static const uint32_t JC_QRE_VERSION_BITS[] = {
        0,    0,    0,    0,    0,    0,    0, 31892, 34236, 39577, 42195, 48118, 51042, 55367, 58893, 63784, 68472, 70749, 76311, 79154, 84390, 87683, 92361, 96236, 102084, 102881, 110507, 110734, 117786, 119615, 126325, 127568, 133589, 136944, 141498, 145311, 150283, 152622, 158308, 161089, 167017,
 };
 
+static const uint32_t JC_QRE_ALIGNMENT_POSITIONS[] = {
+       0,    0,    0,    0,    0,    0,    0,    0,
+       0,    0,    0,    0,    0,    0,    0,    0,
+       6,   18,    0,    0,    0,    0,    0,    0,
+       6,   22,    0,    0,    0,    0,    0,    0,
+       6,   26,    0,    0,    0,    0,    0,    0,
+       6,   30,    0,    0,    0,    0,    0,    0,
+       6,   34,    0,    0,    0,    0,    0,    0,
+       6,   22,   38,    0,    0,    0,    0,    0,
+       6,   24,   42,    0,    0,    0,    0,    0,
+       6,   26,   46,    0,    0,    0,    0,    0,
+       6,   28,   50,    0,    0,    0,    0,    0,
+       6,   30,   54,    0,    0,    0,    0,    0,
+       6,   32,   58,    0,    0,    0,    0,    0,
+       6,   34,   62,    0,    0,    0,    0,    0,
+       6,   26,   46,   66,    0,    0,    0,    0,
+       6,   26,   48,   70,    0,    0,    0,    0,
+       6,   26,   50,   74,    0,    0,    0,    0,
+       6,   30,   54,   78,    0,    0,    0,    0,
+       6,   30,   56,   82,    0,    0,    0,    0,
+       6,   30,   58,   86,    0,    0,    0,    0,
+       6,   34,   62,   90,    0,    0,    0,    0,
+       6,   28,   50,   72,   94,    0,    0,    0,
+       6,   26,   50,   74,   98,    0,    0,    0,
+       6,   30,   54,   78,  102,    0,    0,    0,
+       6,   28,   54,   80,  106,    0,    0,    0,
+       6,   32,   58,   84,  110,    0,    0,    0,
+       6,   30,   58,   86,  114,    0,    0,    0,
+       6,   34,   62,   90,  118,    0,    0,    0,
+       6,   26,   50,   74,   98,  122,    0,    0,
+       6,   30,   54,   78,  102,  126,    0,    0,
+       6,   26,   52,   78,  104,  130,    0,    0,
+       6,   30,   56,   82,  108,  134,    0,    0,
+       6,   34,   60,   86,  112,  138,    0,    0,
+       6,   30,   58,   86,  114,  142,    0,    0,
+       6,   34,   62,   90,  118,  146,    0,    0,
+       6,   30,   54,   78,  102,  126,  150,    0,
+       6,   24,   50,   76,  102,  128,  154,    0,
+       6,   28,   54,   80,  106,  132,  158,    0,
+       6,   32,   58,   84,  110,  136,  162,    0,
+       6,   26,   54,   82,  110,  138,  166,    0,
+       6,   30,   58,   86,  114,  142,  170,    0,
+};
 
 typedef struct _JCQRCodeBitBuffer
 {
@@ -177,8 +223,8 @@ typedef struct _JCQRCodeInternal
     uint8_t  databuffer[4096];  // all segments merged into one buffer (appended one after each other)
     uint8_t  errorcorrection[4096];  // storage for the error correction code words
     uint8_t  interleaved[4096];  // all interleaved blocks, including error correction
-    uint8_t  image[32768];       // Enough to store the largest version (177*177)
-    uint8_t  image_fun[32768];   // Holds info about whether a module is a function module or not
+    uint8_t  image[256*256];       // Enough to store the largest version (177*177)
+    uint8_t  image_fun[256*256];   // Holds info about whether a module is a function module or not
 
     JCQRCodeSegment segments[8];
     uint32_t num_segments;
@@ -264,22 +310,6 @@ static inline uint32_t _jc_qre_bitbuffer_read(uint8_t* buffer, uint32_t buffersi
     return value;
 }
 
-/*
-static void _jc_qre_dbg_print(const uint8_t* buffer, uint32_t numbits)
-{
-    printf("encoded: ");
-    for( uint32_t i = 0; i < numbits; ++i)
-    {
-        uint8_t currentvalue = buffer[i / 8];
-        uint32_t srcindex = i & 0x7;
-        uint32_t srcbit = (currentvalue & (1 << srcindex)) ? 1 : 0;
-
-        printf("%d ", srcbit);
-    }
-    printf("\n");
-}
-*/
-
 static inline uint32_t _jc_qre_guess_type_numeric(const uint8_t* input, uint32_t inputlength)
 {
     for( uint32_t i = 0; i < inputlength; ++i )
@@ -316,10 +346,8 @@ static inline uint8_t _jc_qre_guess_type(const uint8_t* input, uint32_t inputlen
     return JC_QRE_INPUT_TYPE_BYTE;
 }
 
-static uint32_t _jc_qre_encode_numeric(JCQRCodeSegment* seg, uint32_t maxsize, const uint8_t* input, uint32_t inputlength)
+static void _jc_qre_encode_numeric(JCQRCodeSegment* seg, uint32_t maxsize, const uint8_t* input, uint32_t inputlength)
 {
-    if( inputlength >= maxsize )
-        return 0xFFFFFFFF;
     uint32_t accum = 0;
     for( uint32_t i = 0; i < inputlength; ++i, ++input)
     {
@@ -338,13 +366,10 @@ static uint32_t _jc_qre_encode_numeric(JCQRCodeSegment* seg, uint32_t maxsize, c
     }
     seg->elementcount = inputlength;
     seg->type = JC_QRE_INPUT_TYPE_NUMERIC;
-    return seg->elementcount;
 }
 
-static uint32_t _jc_qre_encode_alphanumeric(JCQRCodeSegment* seg, uint32_t maxsize, const uint8_t* input, uint32_t inputlength)
+static void _jc_qre_encode_alphanumeric(JCQRCodeSegment* seg, uint32_t maxsize, const uint8_t* input, uint32_t inputlength)
 {
-    if( inputlength >= maxsize )
-        return 0xFFFFFFFF;
     const char* characters = (const char*)input;
     for( uint32_t i = 0; i < inputlength/2; ++i)
     {
@@ -365,19 +390,14 @@ static uint32_t _jc_qre_encode_alphanumeric(JCQRCodeSegment* seg, uint32_t maxsi
     seg->type = JC_QRE_INPUT_TYPE_ALPHANUMERIC;
 
     //printf("_jc_qre_encode_alphanumeric: %u chars   %u bits\n", inputlength, seg->data.numbits);
-
-    return seg->elementcount;
 }
 
-static uint32_t _jc_qre_encode_bytes(JCQRCodeSegment* seg, uint32_t maxsize, const uint8_t* input, uint32_t inputlength)
+static void _jc_qre_encode_bytes(JCQRCodeSegment* seg, uint32_t maxsize, const uint8_t* input, uint32_t inputlength)
 {
-    if( inputlength >= maxsize )
-        return 0xFFFFFFFF;
     memcpy(seg->data.bits, input, inputlength);
     seg->data.numbits = inputlength * 8;
     seg->elementcount = inputlength;
     seg->type = JC_QRE_INPUT_TYPE_BYTE;
-    return seg->elementcount;
 }
 
 static uint32_t _jc_qre_add_segment(JCQRCodeInternal* qr, const uint8_t* input, uint32_t inputlength)
@@ -398,19 +418,23 @@ static uint32_t _jc_qre_add_segment(JCQRCodeInternal* qr, const uint8_t* input, 
     seg->type = _jc_qre_guess_type(input, inputlength);
 
     uint32_t max_size = sizeof(qr->bitbuffer) - offset;
-    uint32_t result = 0;
+    if( inputlength >= max_size )
+        return 0xFFFFFFFF;
+
     if( seg->type == JC_QRE_INPUT_TYPE_NUMERIC ) {
-        result = _jc_qre_encode_numeric(seg, max_size, input, inputlength);
+        _jc_qre_encode_numeric(seg, max_size, input, inputlength);
     } else if( seg->type == JC_QRE_INPUT_TYPE_ALPHANUMERIC ) {
-        result = _jc_qre_encode_alphanumeric(seg, max_size, input, inputlength);
+        _jc_qre_encode_alphanumeric(seg, max_size, input, inputlength);
     } else if( seg->type == JC_QRE_INPUT_TYPE_BYTE ) {
-        result = _jc_qre_encode_bytes(seg, max_size, input, inputlength);
+        _jc_qre_encode_bytes(seg, max_size, input, inputlength);
     }
 
-    return result;
+    return 0;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Reed-Solomon functions
+
 static uint8_t _jc_qre_rs_multiply(uint8_t x, uint8_t y)
 {
     int32_t v = 0;
@@ -473,18 +497,6 @@ static void _jc_qre_rs_encode(uint32_t length, const uint8_t* coefficients, uint
     }
 }
 
-/*
-static void dbg_array(const uint8_t* a, uint32_t count)
-{
-    printf("\tlen: %u: ", count);
-    for( uint32_t i = 0; i < count; ++i)
-    {
-        printf("%d, ", a[i]);
-    }
-    printf("\n");
-}
-*/
-
 static void _jc_qre_calc_error_correction(JCQRCodeInternal* qr)
 {
     uint32_t index = JC_QRE_INDEX(qr->qrcode.ecl, qr->qrcode.version);
@@ -512,11 +524,6 @@ static void _jc_qre_calc_error_correction(JCQRCodeInternal* qr)
 
         data_offset += num_data_codewords_per_block;
         num_ec_codewords_total += num_ec_codewords_per_block;
-    }
-
-    for( uint32_t i = 0; i < num_ec_codewords_total; ++i )
-    {
-        //printf("EC %u: 0x%02x\n", i, qr->errorcorrection[i]);
     }
 }
 
@@ -576,11 +583,6 @@ static void _jc_qre_interleave_codewords(JCQRCodeInternal* qr)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static inline int32_t _jc_qre_get_image_size(uint32_t version)
-{
-    return (version-1)*4 + 21;
-}
-
 
 static inline void _jc_qre_draw_module(JCQRCodeInternal* qr, int32_t x, int32_t y, uint8_t black)
 {
@@ -598,7 +600,7 @@ static inline uint32_t _jc_qre_is_function_module(JCQRCodeInternal* qr, int32_t 
 
 static void _jc_qre_draw_finder_pattern(JCQRCodeInternal* qr, int32_t x, int32_t y)
 {
-    int size = _jc_qre_get_image_size(qr->qrcode.version);
+    int size = (int)qr->qrcode.size;
 
     for( int j = -4; j <= 4; ++j )
     {
@@ -619,6 +621,26 @@ static void _jc_qre_draw_finder_pattern(JCQRCodeInternal* qr, int32_t x, int32_t
     }
 }
 
+static void _jc_qre_draw_alignment_pattern(JCQRCodeInternal* qr, int32_t x, int32_t y)
+{
+    if( _jc_qre_is_function_module(qr, x, y) )
+        return;
+    int size = (int)qr->qrcode.size;
+    for( int j = -2; j <= 2; ++j )
+    {
+        int yy = y + j;
+        for( int i = -2; i <= 2; ++i )
+        {
+            int xx = x + i;
+            int iabs = i < 0 ? -i : i;
+            int jabs = j < 0 ? -j : j;
+            int max = iabs > jabs ? iabs : jabs;
+
+            _jc_qre_draw_function_module(qr, xx, yy, max == 0 || max == 2);
+        }
+    }
+}
+
 
 static void _jc_qre_draw_data(JCQRCodeInternal* qr)
 {
@@ -629,13 +651,14 @@ static void _jc_qre_draw_data(JCQRCodeInternal* qr)
     uint32_t upwards = 1;
     uint32_t x = size - 1;
 
+/*
     printf("qr->interleavedsize * 8: %u\n", qr->interleavedsize * 8);
 
     print_bits("byte 0: ", qr->interleaved[0], 8);
     print_bits("byte 1: ", qr->interleaved[1], 8);
     print_bits("byte 2: ", qr->interleaved[2], 8);
     print_bits("byte 3: ", qr->interleaved[3], 8);
-
+*/
 
     while( bitindex < qr->interleavedsize * 8 )
     {
@@ -662,20 +685,35 @@ static void _jc_qre_draw_finder_patterns(JCQRCodeInternal* qr)
 {
     uint32_t size = qr->qrcode.size;
 
-    for( uint32_t i = 0; i < (uint32_t)size; ++i )
-    {
-        _jc_qre_draw_function_module(qr, i, 6, i % 2 == 0);
-        _jc_qre_draw_function_module(qr, 6, i, i % 2 == 0);
-    }
-
     _jc_qre_draw_finder_pattern(qr, 3, 3);
     _jc_qre_draw_finder_pattern(qr, size-4, 3);
     _jc_qre_draw_finder_pattern(qr, 3, size-4);
 
+    // alignment patterns
     if( qr->qrcode.version > 1 )
     {
-        // alignment patterns
-        //_jc_qre_draw_finder_pattern(qr, 3, size-4);        
+        for( uint32_t iy = 0; iy < 8; ++iy )
+        {
+            uint32_t y = JC_QRE_ALIGNMENT_POSITIONS[qr->qrcode.version * 8 + iy];
+            if( y == 0 )
+                continue;
+            for( uint32_t ix = 0; ix < 8; ++ix )
+            {
+                uint32_t x = JC_QRE_ALIGNMENT_POSITIONS[qr->qrcode.version * 8 + ix];
+                if( x == 0 )
+                    continue;
+                _jc_qre_draw_alignment_pattern(qr, x, y);
+            }
+        }
+    }
+
+    // timing modules
+    for( uint32_t i = 0; i < (uint32_t)size; ++i )
+    {
+        if( !_jc_qre_is_function_module(qr, i, 6))
+            _jc_qre_draw_function_module(qr, i, 6, i % 2 == 0);
+        if( !_jc_qre_is_function_module(qr, 6, i))
+            _jc_qre_draw_function_module(qr, 6, i, i % 2 == 0);
     }
 
     // the dark module
@@ -687,14 +725,12 @@ static void _jc_qre_draw_format(JCQRCodeInternal* qr, uint32_t pattern_mask)
     uint32_t size = qr->qrcode.size;
     uint32_t format = JC_QRE_FORMAT_BITS[qr->qrcode.ecl * 8 + pattern_mask];
 
+/*
 printf("version: %u  ecl: %d\n", qr->qrcode.version, qr->qrcode.ecl);
 printf("pattern_mask: %u\n", pattern_mask);
     printf("format: %u, 0x%08x\n", format, format);
     print_bits("format:", format, 15);
-
-    // flip the bits, for the benefit of the draw function
-    //format ^= 0xFFFFFFFF;
-
+*/
     // top right
     for( uint32_t i = 0; i < 8; ++i )
     {
@@ -763,19 +799,22 @@ static inline uint32_t _jc_qre_calc_penalty(JCQRCodeInternal* qr)
 
 static void _jc_qre_draw_version(JCQRCodeInternal* qr)
 {
+    if( qr->qrcode.version < 7 )
+        return;
+
     uint32_t size = qr->qrcode.size;
-    if( qr->qrcode.version >= 7 )
+    uint32_t format = JC_QRE_VERSION_BITS[qr->qrcode.version];
+    
+    for( uint32_t x = 0; x < 6; ++x )
     {
-        for( uint32_t x = 0; x < 6; ++x )
+        for( uint32_t y = 0; y < 3; ++y )
         {
-            for( uint32_t y = 0; y < 3; ++y )
-            {
-                uint32_t yy = size - 11 + y;
-                // Bottom left
-                qr->image_fun[yy * 256 + x] = 1;
-                // Top right
-                qr->image_fun[x * 256 + yy] = 1;
-            }
+            uint32_t bit = (format >> (x*3 + y)) & 1;
+            uint32_t yy = size - 11 + y;
+            // Bottom left
+            _jc_qre_draw_function_module(qr, x, yy, bit != 0);
+            // Top right
+            _jc_qre_draw_function_module(qr, yy, x, bit != 0);
         }
     }
 }
@@ -785,7 +824,7 @@ static void _jc_qre_draw_image(JCQRCodeInternal* qr)
     memset(qr->image, 255, sizeof(qr->image));
     memset(qr->image_fun, 0, sizeof(qr->image_fun));
     qr->qrcode.data = qr->image;
-    qr->qrcode.size = _jc_qre_get_image_size(qr->qrcode.version);
+    qr->qrcode.size = (qr->qrcode.version-1)*4 + 21;
 
     _jc_qre_draw_finder_patterns(qr);
     _jc_qre_draw_format(qr, 0); // reserve area
@@ -812,7 +851,7 @@ static void _jc_qre_draw_image(JCQRCodeInternal* qr)
         }
         _jc_qre_draw_mask(qr, i); // undo the mask (using xor)
     }
-    */
+*/
 
     printf("best mask: %u\n", best_mask);
 
@@ -826,35 +865,22 @@ static void _jc_qre_draw_image(JCQRCodeInternal* qr)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-JCQRCode* jc_qrencode(const uint8_t* input, uint32_t inputlength, uint32_t ecl)
+static inline uint32_t _jc_qre_get_total_bits(JCQRCodeInternal* qr, uint32_t version)
 {
-    JCQRCodeInternal* qr = (JCQRCodeInternal*)malloc( sizeof(JCQRCodeInternal) );
-    memset(qr, 0, sizeof(JCQRCodeInternal) );
-    qr->qrcode.ecl = ecl;
-
-    uint32_t numbits = _jc_qre_add_segment(qr, input, inputlength);
-
-    if( numbits == 0 || numbits == 0xFFFFFFFF )
+    uint32_t numbits = 0;
+    for( uint32_t i = 0; i < qr->num_segments; ++i )
     {
-        // todo: error codes
-        free(qr);
-        return 0;
+        JCQRCodeSegment* seg = &qr->segments[i];
+        uint32_t character_bit_count = JC_QRE_CHARACTER_COUNT_BIT_SIZE[JC_QRE_INDEX(seg->type, version)];
+        numbits += 4 + character_bit_count + seg->data.numbits;
     }
+    return numbits;
+}
 
-    uint32_t version = 0;
-    uint32_t capacity_bits = 0;
-    for( uint32_t i = JC_QRE_MIN_VERSION; i <= JC_QRE_MAX_VERSION; ++i )
-    {
-        capacity_bits = JC_QRE_DATA_CODEWORD_COUNT[ JC_QRE_INDEX(ecl, i) ] * 8;
-        if( numbits < capacity_bits )
-        {
-            version = i;
-            break;
-        }
-    }
-    qr->qrcode.version = version;
+static JCQRCode* _jc_qrencode_internal(JCQRCodeInternal* qr)
+{
 
+    uint32_t capacity_bits = JC_QRE_DATA_CODEWORD_COUNT[ JC_QRE_INDEX(qr->qrcode.ecl, qr->qrcode.version) ] * 8;
 
 //printf("Writing segments\n");
     uint32_t datasize = 0;
@@ -863,46 +889,27 @@ JCQRCode* jc_qrencode(const uint8_t* input, uint32_t inputlength, uint32_t ecl)
         JCQRCodeSegment* seg = &qr->segments[i];
         _jc_qre_bitbuffer_write(qr->databuffer, sizeof(qr->databuffer), &datasize, JC_QRE_TYPE_BITS[seg->type], 4);
 
-print_bits("mode:", JC_QRE_TYPE_BITS[seg->type], 4);
+//print_bits("mode:", JC_QRE_TYPE_BITS[seg->type], 4);
 
 //printf("line: %d datasize %u\n", __LINE__, datasize);
-        _jc_qre_bitbuffer_write(qr->databuffer, sizeof(qr->databuffer), &datasize, seg->elementcount, JC_QRE_CHARACTER_COUNT_BIT_SIZE[JC_QRE_INDEX(seg->type, version)]);
+        _jc_qre_bitbuffer_write(qr->databuffer, sizeof(qr->databuffer), &datasize, seg->elementcount, JC_QRE_CHARACTER_COUNT_BIT_SIZE[JC_QRE_INDEX(seg->type, qr->qrcode.version)]);
 
-print_bits("numchars:", seg->elementcount, JC_QRE_CHARACTER_COUNT_BIT_SIZE[JC_QRE_INDEX(seg->type, version)]);
+//print_bits("numchars:", seg->elementcount, JC_QRE_CHARACTER_COUNT_BIT_SIZE[JC_QRE_INDEX(seg->type, version)]);
 
 //printf("line: %d datasize %u\n", __LINE__, datasize);
         _jc_qre_bitbuffer_append(qr->databuffer, sizeof(qr->databuffer), &datasize, seg->data.bits, seg->data.numbits);
 
 
-printf("num bits:  %u\n", datasize);
-
-print_bits("byte 0:", qr->databuffer[0], 8);
-print_bits("byte 1:", qr->databuffer[1], 8);
-print_bits("byte 2:", qr->databuffer[2], 8);
-print_bits("byte 3:", qr->databuffer[3], 8);
+//printf("num bits:  %u\n", datasize);
+//
+//print_bits("byte 0:", qr->databuffer[0], 8);
+//print_bits("byte 1:", qr->databuffer[1], 8);
+//print_bits("byte 2:", qr->databuffer[2], 8);
+//print_bits("byte 3:", qr->databuffer[3], 8);
 
     }
 
-//printf("line: %d datasize %u\n", __LINE__, datasize);
-
-/*
-//printf("Finding a better ecl...\n");
-
-    // see if we can get a higher error correction level and still fit in the smallest version
-    for( uint32_t newecl = ecl+1; newecl <= JC_QRE_ERROR_CORRECTION_LEVEL_HIGH; ++newecl )
-    {
-uint32_t index = JC_QRE_INDEX(newecl, version);
-//printf("ecl: %d  index: %u  bytes: %u\n", newecl, index, JC_QRE_DATA_CODEWORD_COUNT[ JC_QRE_INDEX(newecl, version) ]);
-        uint32_t new_capacity_bits = JC_QRE_DATA_CODEWORD_COUNT[ JC_QRE_INDEX(newecl, version) ] * 8;
-        if( datasize < new_capacity_bits )
-        {
-            ecl = newecl;
-            capacity_bits = new_capacity_bits;
-        }
-    }
-*/
-
-//printf("VERSION: %d   ECL: %d  capacity_bits: %d\n", qr->qrcode.version, qr->qrcode.ecl, capacity_bits);
+printf("VERSION: %d   ECL: %d  capacity_bits: %d\n", qr->qrcode.version, qr->qrcode.ecl, capacity_bits);
 
 //printf("Writing terminator\n");
 
@@ -916,20 +923,14 @@ uint32_t index = JC_QRE_INDEX(newecl, version);
         _jc_qre_bitbuffer_write(qr->databuffer, sizeof(qr->databuffer), &datasize, zeros, terminator_length);
     }
 
-//printf("line: %d datasize %u\n", __LINE__, datasize);
-
     // make it 8 bit aligned
     uint32_t numpadzeros = (8 - (datasize & 0x7)) & 0x7;
     _jc_qre_bitbuffer_write(qr->databuffer, sizeof(qr->databuffer), &datasize, zeros, numpadzeros);
-
-//printf("Writing pad zeroes: %d\n", numpadzeros);
-//printf("datasize %u   capacity_bits %u\n", datasize, capacity_bits);
 
     // pad with bytes
     uint8_t padding[2] = { 236, 17 };
     uint32_t numpadbytes = (capacity_bits - datasize) / 8;
 
-//printf("Padding with %u bytes\n", numpadbytes);
     for( uint32_t i = 0; i < numpadbytes; ++i )
     {
         _jc_qre_bitbuffer_write(qr->databuffer, sizeof(qr->databuffer), &datasize, padding[i&1], 8);
@@ -941,6 +942,91 @@ uint32_t index = JC_QRE_INDEX(newecl, version);
     _jc_qre_interleave_codewords(qr);
     _jc_qre_draw_image(qr);
 
+    return (JCQRCode*)&qr->qrcode;
+}
+
+JCQRCode* jc_qrencode(const uint8_t* input, uint32_t inputlength)
+{
+    JCQRCodeInternal* qr = (JCQRCodeInternal*)malloc( sizeof(JCQRCodeInternal) );
+    memset(qr, 0, sizeof(JCQRCodeInternal) );
+
+    uint32_t result = _jc_qre_add_segment(qr, input, inputlength);
+
+    if( result == 0xFFFFFFFF )
+    {
+        // todo: error codes
+        free(qr);
+        return 0;
+    }
+
+        // Pick the smallest version that fits the data
+    uint32_t version = 0;
+    uint32_t numbits = 0;
+    for( uint32_t i = JC_QRE_MIN_VERSION; i <= JC_QRE_MAX_VERSION; ++i )
+    {
+        uint32_t _numbits = _jc_qre_get_total_bits(qr, i);
+        uint32_t capacity_bits = JC_QRE_DATA_CODEWORD_COUNT[ JC_QRE_INDEX(JC_QRE_ERROR_CORRECTION_LEVEL_LOW, i) ] * 8;
+        if( _numbits < capacity_bits )
+        {
+            version = i;
+            numbits = _numbits;
+            break;
+        }
+    }
+
+    // The data was too large
+    if( !version )
+    {
+        free(qr);
+        return 0;
+    }
+
+printf("numbits: %u\n", numbits);
+    printf("Found version: %u  ecl: %u\n", version, qr->qrcode.ecl);
+    qr->qrcode.version = version;
+    qr->qrcode.ecl = JC_QRE_ERROR_CORRECTION_LEVEL_LOW;
+
+    // Pick the highest error correction that fits within the same version
+    for( uint32_t i = JC_QRE_ERROR_CORRECTION_LEVEL_MEDIUM; i <= JC_QRE_ERROR_CORRECTION_LEVEL_HIGH; ++i )
+    {
+        uint32_t capacity_bits = JC_QRE_DATA_CODEWORD_COUNT[ JC_QRE_INDEX(i, version) ] * 8;
+        if( numbits < capacity_bits )
+        {
+            qr->qrcode.ecl = i;
+            printf("Found new ecl: %u\n", qr->qrcode.ecl);
+        }
+    }
+
+    _jc_qrencode_internal(qr);
+    return (JCQRCode*)&qr->qrcode;
+}
+
+JCQRCode* jc_qrencode_version(const uint8_t* input, uint32_t inputlength, uint32_t version, uint32_t ecl)
+{
+    JCQRCodeInternal* qr = (JCQRCodeInternal*)malloc( sizeof(JCQRCodeInternal) );
+    memset(qr, 0, sizeof(JCQRCodeInternal) );
+
+    uint32_t result = _jc_qre_add_segment(qr, input, inputlength);
+
+    if( result == 0xFFFFFFFF )
+    {
+        // todo: error codes
+        free(qr);
+        return 0;
+    }
+
+    qr->qrcode.version = version;
+    qr->qrcode.ecl = ecl;
+
+    uint32_t numbits = _jc_qre_get_total_bits(qr, version);
+    uint32_t capacity_bits = JC_QRE_DATA_CODEWORD_COUNT[ JC_QRE_INDEX(ecl, version) ] * 8;
+    if( numbits > capacity_bits )
+    {
+        free(qr);
+        return 0;
+    }
+
+    _jc_qrencode_internal(qr);
     return (JCQRCode*)&qr->qrcode;
 }
 

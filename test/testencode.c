@@ -320,8 +320,8 @@ static int save_image(JCQRCode* qr, const char* path)
 {
     int32_t size = qr->size;
 
-    int32_t border = 2;
-    int32_t scale = 8;
+    int32_t border = 4;
+    int32_t scale = 1;
     int32_t newsize = scale*(size + 2 * border);
     uint8_t* large = (uint8_t*)malloc( newsize * newsize );
 
@@ -346,17 +346,64 @@ static int save_image(JCQRCode* qr, const char* path)
     return result;
 }
 
+struct TestData
+{
+    const char* text;
+    uint32_t version;
+    uint32_t ecl;
+};
+
 static void qrencode_test_full(Context* ctx)
 {
     (void)ctx;
 
-    const char* text = "HELLO WORLD";
-    uint32_t len = (uint32_t)strlen(text);
+    // http://www.thonky.com/qr-code-tutorial/character-capacities
+    struct TestData data[] = {
+        { "HELLO WORLD", 1, JC_QRE_ERROR_CORRECTION_LEVEL_QUARTILE },
+        { "Hello World!!", 1, JC_QRE_ERROR_CORRECTION_LEVEL_MEDIUM }, // byte mode, 
+        { "0123456789", 1, JC_QRE_ERROR_CORRECTION_LEVEL_HIGH },
+        { "https://github.com/JCash/qrcode", 2, JC_QRE_ERROR_CORRECTION_LEVEL_LOW },
+    };
 
-    JCQRCode* qr = jc_qrencode((const uint8_t*)text, len, JC_QRE_ERROR_CORRECTION_LEVEL_QUARTILE);
-    save_image(qr, "test.png");
+    for( uint32_t i = 0; i < sizeof(data)/sizeof(data[0]); ++i )
+    {
+        struct TestData* d = &data[i];
+        uint32_t len = (uint32_t)strlen(d->text);
 
-    free(qr);
+        JCQRCode* qr = jc_qrencode((const uint8_t*)d->text, len);
+//save_image(qr, "test.png");
+
+        ASSERT_EQ( d->version, qr->version );
+        ASSERT_EQ( d->ecl, qr->ecl );
+
+        free(qr);
+    }
+}
+
+static void qrencode_test_matrix(Context* ctx)
+{    
+    (void)ctx;
+
+//uint32_t ecl = 0;
+//uint32_t version = 28;
+    for( uint32_t version = JC_QRE_MIN_VERSION; version <= JC_QRE_MAX_VERSION; ++version )
+    {
+        for( uint32_t ecl = JC_QRE_ERROR_CORRECTION_LEVEL_LOW; ecl <= JC_QRE_ERROR_CORRECTION_LEVEL_HIGH; ++ecl )
+        {
+            char buffer[128];
+            sprintf(buffer, "v %d e %d", version, ecl);
+
+            JCQRCode* qr = jc_qrencode_version((const uint8_t*)buffer, strlen(buffer), version, ecl);
+
+            sprintf(buffer, "test_v%d_ecl%d.png", version, ecl);
+    save_image(qr, buffer);
+
+            ASSERT_EQ( version, qr->version );
+            ASSERT_EQ( ecl, qr->ecl );
+
+            free(qr);
+        }
+    }
 }
 
 TEST_BEGIN(qrencode_test, qrencode_main_setup, qrencode_main_teardown, test_setup, test_teardown)
@@ -369,6 +416,7 @@ TEST_BEGIN(qrencode_test, qrencode_main_setup, qrencode_main_teardown, test_setu
     TEST(qrencode_test_error_correction)
     TEST(qrencode_test_interleave)
     TEST(qrencode_test_full)
+    TEST(qrencode_test_matrix)
 TEST_END(qrencode_test)
 
 

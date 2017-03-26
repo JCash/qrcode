@@ -53,10 +53,15 @@ def run_tests():
                 print("FAILED %d: Decoded text differs from source!" % i)
                 print("\tsource:  '%s'" % text)
                 print("\tdecoded: '%s'" %  s)
+            return 1
         else:
             print("OUTPUT: '%s'" % s)
+
+    return 0
 
 
 
 if __name__ == '__main__':
-    run_tests()
+    ret = run_tests()
+    os.exit(ret)
+    

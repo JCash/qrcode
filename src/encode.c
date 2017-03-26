@@ -43,7 +43,7 @@ static int save_image(JCQRCode* qr, const char* path)
 {
     int32_t size = qr->size;
 
-    int32_t border = 2;
+    int32_t border = 4;
     int32_t scale = 8;
     int32_t newsize = scale*(size + 2 * border);
     uint8_t* large = (uint8_t*)malloc( newsize * newsize );
@@ -116,6 +116,7 @@ int main(int argc, const char** argv)
 {
     int width = 512;
     int height = 512;
+    int verbose = 0;
     const char* inputfile = 0;
     const char* outputfile = "out.png";
 
@@ -167,6 +168,10 @@ int main(int argc, const char** argv)
                 Usage();
                 return 1;
             }
+        }
+        else if(strcmp(argv[i], "-v") == 0)
+        {
+            verbose += 1;
         }
         else if(strcmp(argv[i], "-?") == 0 || strcmp(argv[i], "--help") == 0)
         {
@@ -222,12 +227,17 @@ int main(int argc, const char** argv)
 
     printf("TEXT: '%s'\n", g_Text);
 
-
     JCQRCode* qr = jc_qrencode((const uint8_t*)g_Text, (uint32_t)strlen(g_Text), JC_QRE_ERROR_CORRECTION_LEVEL_QUARTILE);
     if( !qr )
     {
         fprintf(stderr, "Failed to encode text\n");
         return 1;
+    }
+
+    if(verbose)
+    {
+        const char* ecl[] = {"LOW", "MEDIUM", "QUARTILE", "HIGH"};
+        printf("QRCode: Version: %u     Error Correction Level: %s\n", qr->version, ecl[qr->ecl]);
     }
 
     save_image(qr, outputfile);
