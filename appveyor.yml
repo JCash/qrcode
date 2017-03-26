@@ -3,17 +3,28 @@ platform:
   - x64
 
 install:
+  - cd test
+  - curl -L https://github.com/zxing/zxing/archive/00f634024ceeee591f54e6984ea7dd666fab22ae.zip -o zxing.zip
+  - unzip zxing.zip -d zxing
+  - cd zxing/zxing-00f634024ceeee591f54e6984ea7dd666fab22ae/cpp/build
+  - if "%platform%"=="Win32" set CMAKE_GENERATOR_NAME=Visual Studio 14 2015
+  - if "%platform%"=="x64"   set CMAKE_GENERATOR_NAME=Visual Studio 14 2015 Win64
+  - cmake -G "%CMAKE_GENERATOR_NAME%" -DCMAKE_BUILD_TYPE=%configuration% ..
 
-before_build:
-  - call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64
-  - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
 
 build_script:
   - compile_cl.bat
   - cd test
-  - setup.bat
   - compile_cl.bat
+
+after_build:
+  - 7z a qrencode.zip %APPVEYOR_BUILD_FOLDER%\build\qrencode.exe
 
 test_script:
   - build\testencode.exe
   - python.exe run.py
+
+artifacts:
+  - path: qrencode.zip
+    name: qrencode
+    type: zip
