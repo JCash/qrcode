@@ -321,7 +321,7 @@ static int save_image(JCQRCode* qr, const char* path)
     int32_t size = qr->size;
 
     int32_t border = 4;
-    int32_t scale = 1;
+    int32_t scale = 3;
     int32_t newsize = scale*(size + 2 * border);
     uint8_t* large = (uint8_t*)malloc( newsize * newsize );
 
@@ -385,7 +385,7 @@ static void qrencode_test_matrix(Context* ctx)
     (void)ctx;
 
 //uint32_t ecl = 0;
-//uint32_t version = 28;
+//uint32_t version = 15;
     for( uint32_t version = JC_QRE_MIN_VERSION; version <= JC_QRE_MAX_VERSION; ++version )
     {
         for( uint32_t ecl = JC_QRE_ERROR_CORRECTION_LEVEL_LOW; ecl <= JC_QRE_ERROR_CORRECTION_LEVEL_HIGH; ++ecl )
@@ -396,7 +396,7 @@ static void qrencode_test_matrix(Context* ctx)
             JCQRCode* qr = jc_qrencode_version((const uint8_t*)buffer, strlen(buffer), version, ecl);
 
             sprintf(buffer, "test_v%d_ecl%d.png", version, ecl);
-    save_image(qr, buffer);
+    //save_image(qr, buffer);
 
             ASSERT_EQ( version, qr->version );
             ASSERT_EQ( ecl, qr->ecl );

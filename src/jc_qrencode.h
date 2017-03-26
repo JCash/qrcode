@@ -14,20 +14,13 @@
 
 #include <stdint.h>
 
-#if defined(__LP64__) || defined(_WIN64) || (defined(__x86_64__) && !defined(__ILP32__) ) || defined(_M_X64) || defined(__ia64) || defined (_M_IA64) || defined(__aarch64__) || defined(__powerpc64__)
-    #define JC_QRE_IS64BIT 1
-    #define JC_QRE_PAD(_X_) uint8_t _pad[_X_]
-#else
-    #define JC_QRE_PAD(_X_)
-#endif
+static const uint32_t JC_QRE_MIN_VERSION = 1;
+static const uint32_t JC_QRE_MAX_VERSION = 40;
 
 const static uint32_t JC_QRE_ERROR_CORRECTION_LEVEL_LOW        = 0;
 const static uint32_t JC_QRE_ERROR_CORRECTION_LEVEL_MEDIUM     = 1;
 const static uint32_t JC_QRE_ERROR_CORRECTION_LEVEL_QUARTILE   = 2;
 const static uint32_t JC_QRE_ERROR_CORRECTION_LEVEL_HIGH       = 3;
-
-static const uint32_t JC_QRE_MIN_VERSION = 1;
-static const uint32_t JC_QRE_MAX_VERSION = 40;
 
 typedef struct _JCQRCode
 {
@@ -68,6 +61,14 @@ JCQRCode* jc_qrencode_version(const uint8_t* input, uint32_t inputlength, uint32
 
 #if defined(JC_QRENCODE_IMPLEMENTATION)
 
+#if defined(__LP64__) || defined(_WIN64) || (defined(__x86_64__) && !defined(__ILP32__) ) || defined(_M_X64) || defined(__ia64) || defined (_M_IA64) || defined(__aarch64__) || defined(__powerpc64__)
+    #define JC_QRE_IS64BIT 1
+    #define JC_QRE_PAD(_X_) uint8_t _pad[_X_]
+#else
+    #define JC_QRE_PAD(_X_)
+#endif
+
+
 static void print_bits(const char* tag, uint32_t v, uint32_t count)
 {
     printf("%s 0b", tag);
@@ -100,11 +101,12 @@ static int32_t JC_QRE_ALPHANUMERIC_MAPPINGS[] = {
 // Each array has 4 levels of error correction, and one extra (first) element in each
 #define JC_QRE_INDEX(_ECL, _I) ((_ECL)*(JC_QRE_MAX_VERSION+1) + (_I))
 
+//     0,    1,    2,    3,    4,    5,    6,    7,    8,    9,   10,   11,   12,   13,   14,   15,   16,   17,   18,   19,   20,   21,   22,   23,   24,   25,   26,   27,   28,   29,   30,   31,   32,   33,   34,   35,   36,   37,   38,   39,   40,
 static uint32_t JC_QRE_DATA_CODEWORD_COUNT[] = {
-    0,   19,   34,   55,   80,  108,  136,  156,  194,  232,  274,  324,  370,  428,  461,  523,  589,  647,  721,  795,  861,  932, 1006, 1094, 1174, 1276, 1370, 1468, 1531, 1631, 1735, 1843, 1955, 2071, 2191, 2306, 2434, 2566, 2702, 2812, 2956,
-    0,   16,   28,   44,   64,   86,  108,  124,  154,  182,  216,  254,  290,  334,  365,  415,  453,  507,  563,  627,  669,  714,  782,  860,  914, 1000, 1062, 1128, 1193, 1267, 1373, 1455, 1541, 1631, 1725, 1812, 1914, 1992, 2102, 2216, 2334,
-    0,   13,   22,   34,   48,   62,   76,   88,  110,  132,  154,  180,  206,  244,  261,  295,  325,  367,  397,  445,  485,  512,  568,  614,  664,  718,  754,  808,  871,  911,  985, 1033, 1115, 1171, 1231, 1286, 1354, 1426, 1502, 1582, 1666,
-    0,    9,   16,   26,   36,   46,   60,   66,   86,  100,  122,  140,  158,  180,  197,  223,  253,  283,  313,  341,  385,  406,  442,  464,  514,  538,  596,  628,  661,  701,  745,  793,  845,  901,  961,  986, 1054, 1096, 1142, 1222, 1276,
+       0,   19,   34,   55,   80,  108,  136,  156,  194,  232,  274,  324,  370,  428,  461,  523,  589,  647,  721,  795,  861,  932, 1006, 1094, 1174, 1276, 1370, 1468, 1531, 1631, 1735, 1843, 1955, 2071, 2191, 2306, 2434, 2566, 2702, 2812, 2956,
+       0,   16,   28,   44,   64,   86,  108,  124,  154,  182,  216,  254,  290,  334,  365,  415,  453,  507,  563,  627,  669,  714,  782,  860,  914, 1000, 1062, 1128, 1193, 1267, 1373, 1455, 1541, 1631, 1725, 1812, 1914, 1992, 2102, 2216, 2334,
+       0,   13,   22,   34,   48,   62,   76,   88,  110,  132,  154,  180,  206,  244,  261,  295,  325,  367,  397,  445,  485,  512,  568,  614,  664,  718,  754,  808,  871,  911,  985, 1033, 1115, 1171, 1231, 1286, 1354, 1426, 1502, 1582, 1666,
+       0,    9,   16,   26,   36,   46,   60,   66,   86,  100,  122,  140,  158,  180,  197,  223,  253,  283,  313,  341,  385,  406,  442,  464,  514,  538,  596,  628,  661,  701,  745,  793,  845,  901,  961,  986, 1054, 1096, 1142, 1222, 1276,
 };
 static const uint32_t JC_QRE_ERROR_CORRECTION_CODEWORD_COUNT[] = {
        0,    7,   10,   15,   20,   26,   18,   20,   24,   30,   18,   20,   24,   26,   30,   22,   24,   28,   30,   28,   28,   28,   28,   30,   30,   26,   28,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,   30,
@@ -219,12 +221,12 @@ typedef struct _JCQRCodeInternal
 {
     JCQRCode qrcode; // the output
 
-    uint8_t  bitbuffer[4096];   // storage for all the segments. Each segment starts at a byte boundary
-    uint8_t  databuffer[4096];  // all segments merged into one buffer (appended one after each other)
-    uint8_t  errorcorrection[4096];  // storage for the error correction code words
-    uint8_t  interleaved[4096];  // all interleaved blocks, including error correction
-    uint8_t  image[256*256];       // Enough to store the largest version (177*177)
-    uint8_t  image_fun[256*256];   // Holds info about whether a module is a function module or not
+    uint8_t  bitbuffer[4096];       // storage for all the segments. Each segment starts at a byte boundary
+    uint8_t  databuffer[4096];      // all segments merged into one buffer (appended one after each other)
+    uint8_t  errorcorrection[4096]; // storage for the error correction code words
+    uint8_t  interleaved[4096];     // all interleaved blocks, including error correction
+    uint8_t  image[256*256];        // Enough to store the largest version (177*177)
+    uint8_t  image_fun[256*256];    // Holds info about whether a module is a function module or not
 
     JCQRCodeSegment segments[8];
     uint32_t num_segments;
@@ -233,14 +235,22 @@ typedef struct _JCQRCodeInternal
 } JCQRCodeInternal;
 
 
+#include <assert.h>
+
 // Store the integer with the most significant bit first
 static inline uint32_t _jc_qre_bitbuffer_write(uint8_t* buffer, uint32_t buffersize, uint32_t* cursor, uint32_t input, uint32_t numbits)
 {
     uint32_t num_bytes_to_traverse = (numbits + 7) / 8;
-    if( *cursor + num_bytes_to_traverse >= buffersize )
+    if( *cursor / 8 + num_bytes_to_traverse >= buffersize )
+    {
+        assert(false && "Output buffer overrun");
         return 0;
+    }
     if( numbits > 32 )
+    {
+        assert(false && "Input buffer overrun");
         return 0;
+    }
     
     uint32_t pos = *cursor; // in bits
 
@@ -853,7 +863,7 @@ static void _jc_qre_draw_image(JCQRCodeInternal* qr)
     }
 */
 
-    printf("best mask: %u\n", best_mask);
+    //printf("best mask: %u\n", best_mask);
 
     _jc_qre_draw_format(qr, best_mask);
     _jc_qre_draw_mask(qr, best_mask);
@@ -901,15 +911,17 @@ static JCQRCode* _jc_qrencode_internal(JCQRCodeInternal* qr)
 
 
 //printf("num bits:  %u\n", datasize);
-//
+
 //print_bits("byte 0:", qr->databuffer[0], 8);
 //print_bits("byte 1:", qr->databuffer[1], 8);
 //print_bits("byte 2:", qr->databuffer[2], 8);
 //print_bits("byte 3:", qr->databuffer[3], 8);
+//print_bits("byte 4:", qr->databuffer[4], 8);
+
 
     }
 
-printf("VERSION: %d   ECL: %d  capacity_bits: %d\n", qr->qrcode.version, qr->qrcode.ecl, capacity_bits);
+//printf("VERSION: %d   ECL: %d  capacity_bits: %d\n", qr->qrcode.version, qr->qrcode.ecl, capacity_bits);
 
 //printf("Writing terminator\n");
 
@@ -928,7 +940,7 @@ printf("VERSION: %d   ECL: %d  capacity_bits: %d\n", qr->qrcode.version, qr->qrc
     _jc_qre_bitbuffer_write(qr->databuffer, sizeof(qr->databuffer), &datasize, zeros, numpadzeros);
 
     // pad with bytes
-    uint8_t padding[2] = { 236, 17 };
+    uint8_t padding[2] = { 0xEC, 0x11 };
     uint32_t numpadbytes = (capacity_bits - datasize) / 8;
 
     for( uint32_t i = 0; i < numpadbytes; ++i )
@@ -981,8 +993,6 @@ JCQRCode* jc_qrencode(const uint8_t* input, uint32_t inputlength)
         return 0;
     }
 
-printf("numbits: %u\n", numbits);
-    printf("Found version: %u  ecl: %u\n", version, qr->qrcode.ecl);
     qr->qrcode.version = version;
     qr->qrcode.ecl = JC_QRE_ERROR_CORRECTION_LEVEL_LOW;
 
@@ -993,7 +1003,6 @@ printf("numbits: %u\n", numbits);
         if( numbits < capacity_bits )
         {
             qr->qrcode.ecl = i;
-            printf("Found new ecl: %u\n", qr->qrcode.ecl);
         }
     }
 
