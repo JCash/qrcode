@@ -235,20 +235,16 @@ typedef struct _JCQRCodeInternal
 } JCQRCodeInternal;
 
 
-#include <assert.h>
-
 // Store the integer with the most significant bit first
 static inline uint32_t _jc_qre_bitbuffer_write(uint8_t* buffer, uint32_t buffersize, uint32_t* cursor, uint32_t input, uint32_t numbits)
 {
     uint32_t num_bytes_to_traverse = (numbits + 7) / 8;
     if( *cursor / 8 + num_bytes_to_traverse >= buffersize )
     {
-        assert(false && "Output buffer overrun");
         return 0;
     }
     if( numbits > 32 )
     {
-        assert(false && "Input buffer overrun");
         return 0;
     }
     

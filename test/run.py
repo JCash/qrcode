@@ -45,7 +45,6 @@ def run_tests():
         img = os.path.join('build', 'test_%02d.png' % i)
         encode(text, img)
         s = reference_decode(img)
-        print("OUTPUT: '%s'" % s)
         if text != s:
             if s is None:
                 print("FAILED %d: Failed to decode image: %s" % (i, img))
