@@ -7,6 +7,8 @@ ZXING_VERSION='00f634024ceeee591f54e6984ea7dd666fab22ae'
 ZXING_URL='https://github.com/zxing/zxing/archive/%s.zip' % ZXING_VERSION
 ZXING_ZIP='zxing.zip'
 ZXING_EXE='build/zxing'
+if sys.platform == 'win32':
+    ZXING_EXE+='.exe'
 
 def run(cmd, cwd=None):
     p = subprocess.Popen(cmd.split(), cwd=cwd)
@@ -16,8 +18,8 @@ def curl(url, path):
     cmd = 'curl -L %s -o %s' % (url,path)
     run(cmd)
 
-def unzip(src, dst):
-    cmd = 'unzip %s -d %s' % (src, dst)
+def unzip(src, dst, quiet=true):
+    cmd = 'unzip %s %s -d %s' % ('-q' if quiet else '', src, dst)
     run(cmd)
 
 def cp(src, dst):

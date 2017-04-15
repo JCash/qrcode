@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+// I wrapped it in a library because it spams too many warnings
 extern int wrap_stbi_write_png(char const *filename, int w, int h, int comp, const void *data, int stride_in_bytes);
 
 #define JC_QRENCODE_IMPLEMENTATION
@@ -11,33 +12,16 @@ extern int wrap_stbi_write_png(char const *filename, int w, int h, int comp, con
 
 static void Usage()
 {
+    printf("qrencode encodes text into a QRCode image\n");
     printf("Usage: qrencode [options] [text]\n");
     printf("\t-i <inputfile>\t\tA file containing text\n");
     printf("\t-o <outputfile.png>\n");
-    printf("\t-w <width>\n");
-    printf("\t-h <height>\n");
+    printf("\t-w <width>\t\t\tThe output width of the image\n");
+    printf("\t-h <height>\t\t\tThe output height of the image\n");
 }
 
 static char g_Text[8192];
 static uint32_t g_TextLength = 0;
-
-/*
-static void read_input(char* buffer, uint32_t buffersize, uint32_t* length)
-{
-    ssize_t num_read = 0;
-    uint32_t l = 0;
-    while( (num_read = read(STDIN_FILENO, &buffer[l], 32)) > 0 )
-    {
-        l += num_read;
-        if( l > buffersize )
-        {
-            *length = 0xFFFFFFFF;
-            return;
-        }
-    }
-    *length = l;
-}
-*/
 
 static int save_image(JCQRCode* qr, const char* path)
 {
@@ -85,13 +69,6 @@ static void read_input(const char* path, char* buffer, uint32_t buffersize, uint
             *length = 0;
             return;
         }
-
-        /*
-        fseek(file, 0, SEEK_END);
-        size_t size = (size_t)ftell(file);
-        fseek(file, 0, SEEK_SET);
-        count = (int)(size / sizeof(jcv_point));
-        */
 
         uint32_t l = 0;
         while( !feof(file) )

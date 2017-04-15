@@ -1,12 +1,63 @@
 /*
+
+ABOUT:
+
+    A C / C++ QRCode encoder
+
+HISTORY:
+
+    0.1     2017-04-15  - Initial version
+
+LICENSE:
+
+    The MIT License (MIT)
+
+    Copyright (c) 2015 Mathias Westerdahl
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+
+
+DISCLAIMER:
+
+    This software is supplied "AS IS" without any warranties and support
+
+USAGE:
+
+    A simple example usage:
+
+    #define JC_QRENCODE_IMPLEMENTATION
+    #include "jc_qrencode.h"
+
+    const char* text = "HELLO WORLD";
+    JCQRCode* qr = jc_qrencode((const uint8_t*)text, (uint32_t)strlen(text));
+    if( !qr )
+    {
+        fprintf(stderr, "Failed to encode text\n");
+        return 1;
+    }
+
+    // Save a png file
+    stbi_write_png("out.png", qr->size, qr->size, 1, qr->data, 256); // Stride is currently 256 bytes
+
+    free(qr); // free the qr code
+
 */
-
-
-// references for the Reed-Solomon error correction
-// https://en.wikiversity.org/wiki/Reed%E2%80%93Solomon_codes_for_coders
-// https://github.com/qsantos/qrcode/blob/master/rs.c
-// https://github.com/kazuhikoarase/qrcode-generator/blob/master/java/src/java/com/d_project/qrcode/QRUtil.java
-
 
 
 #ifndef JC_QRENCODE_H
@@ -51,12 +102,6 @@ JCQRCode* jc_qrencode(const uint8_t* input, uint32_t inputlength);
 * @return 0 if the qr code couldn't be created. The returned qrcode must be deallocated with free()
 */
 JCQRCode* jc_qrencode_version(const uint8_t* input, uint32_t inputlength, uint32_t version, uint32_t ecl);
-
-// ..
-// jc_qrencode_create()
-// jc_qrencode_add_segment()
-// ...
-// jc_qrencode_encode()
 
 
 #if defined(JC_QRENCODE_IMPLEMENTATION)
@@ -594,6 +639,10 @@ static inline void _jc_qre_draw_module(JCQRCodeInternal* qr, int32_t x, int32_t 
 {
     qr->image[y * 256 + x] = black ? 0 : 255;
 }
+static inline uint8_t _jc_qre_get_module(JCQRCodeInternal* qr, int32_t x, int32_t y)
+{
+    return qr->image[y * 256 + x];
+}
 static inline void _jc_qre_draw_function_module(JCQRCodeInternal* qr, int32_t x, int32_t y, uint8_t black)
 {
     qr->image[y * 256 + x] = black ? 0 : 255;
@@ -799,8 +848,118 @@ static void _jc_qre_draw_mask(JCQRCodeInternal* qr, uint32_t pattern_mask)
 
 static inline uint32_t _jc_qre_calc_penalty(JCQRCodeInternal* qr)
 {
-    (void)qr;
-    return 0;
+    uint32_t size = qr->qrcode.size;
+    uint32_t penalty = 0;
+
+    // 5 or more in a row
+    for( uint32_t y = 0; y < size; ++y )
+    {
+        uint8_t color = _jc_qre_get_module(qr, 0, y);
+        uint32_t consecutive = 1;
+        for( uint32_t x = 1; x < size; ++x )
+        {
+            uint8_t nextcolor = _jc_qre_get_module(qr, x, y);
+            if( color == nextcolor )
+            {
+                consecutive++;
+            }
+            else
+            {
+                color = nextcolor;
+                penalty += consecutive >= 5 ? 3 + (consecutive-5) : 0;
+                consecutive = 1;
+            }
+        }
+        penalty += consecutive >= 5 ? 3 + (consecutive-5) : 0;
+    }
+    // 5 or more in a column
+    for( uint32_t x = 0; x < size; ++x )
+    {
+        uint8_t color = _jc_qre_get_module(qr, x, 0);
+        uint32_t consecutive = 1;
+        for( uint32_t y = 1; y < size; ++y )
+        {
+            uint8_t nextcolor = _jc_qre_get_module(qr, x, y);
+            if( color == nextcolor )
+            {
+                consecutive++;
+            }
+            else
+            {
+                color = nextcolor;
+                penalty += consecutive >= 5 ? 3 + (consecutive-5) : 0;
+                consecutive = 1;
+            }
+        }
+        penalty += consecutive >= 5 ? 3 + (consecutive-5) : 0;
+    }
+
+/*
+    // find 2x2 blocks of same color
+    for( uint32_t y = 0; y < size-1; ++y )
+    {
+        for( uint32_t x = 0; x < size-1; ++x )
+        {
+            uint8_t color1 = _jc_qre_get_module(qr, x, y);
+            uint8_t color2 = _jc_qre_get_module(qr, x+1, y);
+            uint8_t color3 = _jc_qre_get_module(qr, x, y+1);
+            uint8_t color4 = _jc_qre_get_module(qr, x+1, y+1);
+            penalty += (color1 & color2 & color3 & color4 & 1) * 3;
+        }
+    }
+
+    // find special patterns
+    uint32_t mask = (1 << 12) - 1;
+    uint32_t pattern1 = 0x5d0; // 11 bits long
+    uint32_t pattern2 = 0x5d;
+    for( uint32_t y = 0; y < size; ++y )
+    {
+        uint32_t bits = 0;
+        for( uint32_t x = 0; x < 11; ++x )
+        {
+            bits = bits << 1 | (_jc_qre_get_module(qr, x, y) & 1);
+        }
+        for( uint32_t x = 11; x < size; ++x )
+        {
+            bits = ((bits << 1) & mask) | (_jc_qre_get_module(qr, x, y) & 1);
+            penalty += (bits == pattern1 || bits == pattern2) ? 40 : 0;
+        }
+    }
+
+    for( uint32_t x = 0; x < size; ++x )
+    {
+        uint32_t bits = 0;
+        for( uint32_t y = 0; y < 11; ++y )
+        {
+            bits = bits << 1 | (_jc_qre_get_module(qr, x, y) & 1);
+        }
+        for( uint32_t y = 11; y < size; ++y )
+        {
+            bits = ((bits << 1) & mask) | (_jc_qre_get_module(qr, x, y) & 1);
+            penalty += (bits == pattern1 || bits == pattern2) ? 40 : 0;
+        }
+    }
+
+    int32_t num_black = 0;
+    for( uint32_t y = 0; y < size; ++y )
+    {
+        for( uint32_t x = 0; x < size; ++x )
+        {
+            num_black += _jc_qre_get_module(qr, x, y) & 1;
+        }
+    }
+    int32_t ratio = (num_black * 100) / (size*size);
+    int32_t multiples_of_5 = ratio / 5;
+    int32_t value1 = (multiples_of_5 * 5) - 50;
+    int32_t value2 = value1 + 5;
+    value1 = value1 < 0 ? -value1 : value1;
+    value2 = value2 < 0 ? -value2 : value2;
+    value1 = value1 / 5;
+    value2 = value2 / 5;
+    penalty += ((value1 < value2) ? value1 : value2) * 10;
+*/
+
+    return penalty;
 }
 
 static void _jc_qre_draw_version(JCQRCodeInternal* qr)
@@ -840,7 +999,7 @@ static void _jc_qre_draw_image(JCQRCodeInternal* qr)
 
     // apply masks and find the best one
     uint32_t best_mask = 0;
-    /*
+
     uint32_t lowest_score = 0xFFFFFFFF;
     for( uint32_t i = 0; i < 8; ++i )
     {
@@ -857,9 +1016,9 @@ static void _jc_qre_draw_image(JCQRCodeInternal* qr)
         }
         _jc_qre_draw_mask(qr, i); // undo the mask (using xor)
     }
-*/
 
-    //printf("best mask: %u\n", best_mask);
+best_mask = 0;
+    printf("best mask: %u  score: %u\n", best_mask, lowest_score);
 
     _jc_qre_draw_format(qr, best_mask);
     _jc_qre_draw_mask(qr, best_mask);
