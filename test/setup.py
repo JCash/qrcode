@@ -18,7 +18,7 @@ def curl(url, path):
     cmd = 'curl -L %s -o %s' % (url,path)
     run(cmd)
 
-def unzip(src, dst, quiet=true):
+def unzip(src, dst, quiet=True):
     cmd = 'unzip %s %s -d %s' % ('-q' if quiet else '', src, dst)
     run(cmd)
 

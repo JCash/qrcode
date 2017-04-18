@@ -445,6 +445,7 @@ static void _jc_qre_encode_alphanumeric(JCQRCodeSegment* seg, uint32_t maxsize, 
 
 static void _jc_qre_encode_bytes(JCQRCodeSegment* seg, uint32_t maxsize, const uint8_t* input, uint32_t inputlength)
 {
+    (void)maxsize;
     memcpy(seg->data.bits, input, inputlength);
     seg->data.numbits = inputlength * 8;
     seg->elementcount = inputlength;
@@ -680,7 +681,6 @@ static void _jc_qre_draw_alignment_pattern(JCQRCodeInternal* qr, int32_t x, int3
 {
     if( _jc_qre_is_function_module(qr, x, y) )
         return;
-    int size = (int)qr->qrcode.size;
     for( int j = -2; j <= 2; ++j )
     {
         int yy = y + j;

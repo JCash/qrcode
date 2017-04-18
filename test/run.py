@@ -16,6 +16,9 @@ def run(cmd, cwd=None):
 def reference_decode(srcimage):
     # The reference tool for decoding images into text
     s = run('%s %s' % (REF_DECODER, srcimage))
+    if s.endswith('\r\n '):
+        s = s[:-3]
+        return s
     if s.endswith('\n '):
         s = s[:-2]
         return s
@@ -51,7 +54,7 @@ def run_tests():
             else:
                 print("FAILED %d: Decoded text differs from source!" % i)
                 print("\tsource:  '%s'" % text)
-                print("\tdecoded: '%s'" %  s)
+                print("\tdecoded: '%s'" % s)
             return 1
         else:
             print("OUTPUT: '%s'" % s)
