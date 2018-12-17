@@ -1,12 +1,12 @@
 import sys, os, subprocess
 
 REF_DECODER='build/zxing'
-ENCODER='build/qrcode'
+ENCODER='../build/qrencode'
 
 def run(cmd, cwd=None):
     p = subprocess.Popen(cmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
-    p.wait()
-    if p.retcode != 0:
+    return_code = p.wait()
+    if return_code != 0:
         return None
     return p.stdout.read() + ' ' + p.stderr.read()
 

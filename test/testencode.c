@@ -77,8 +77,8 @@ static void qrencode_test_bit_buffer(Context* ctx)
     uint32_t totalnumbits = 0;
     uint32_t numbitswritten = 0;
     uint32_t numbitsread = 0;
-    
-    // 
+
+    //
     {
         memset(payload, 0, sizeof(payload));
         totalnumbits = 0;
@@ -212,7 +212,7 @@ static void qrencode_test_rs_create(Context* ctx)
          15,  54, 120,  64,   0,   0,   0,
          31, 198,  63, 147, 116,   0,   0,
          63,   1, 218,  32, 227,  38,   0,
-        127, 122, 154, 164,  11,  68, 117,    
+        127, 122, 154, 164,  11,  68, 117,
     };
 
     for( uint32_t i = 0; i < 7; ++i )
@@ -338,7 +338,7 @@ static int save_image(JCQRCode* qr, const char* path)
 
     int result = stbi_write_png(path, newsize, newsize, 1, large, newsize);
     free(large);
-    
+
     if(result)
         printf("Wrote to %s\n", path);
     else
@@ -351,13 +351,28 @@ static void qrencode_test_full(Context* ctx)
     (void)ctx;
 
     const char* text = "HELLO WORLD";
-    uint32_t len = (uint32_t)strlen(text);
 
-    JCQRCode* qr = jc_qrencode((const uint8_t*)text, len, JC_QRE_ERROR_CORRECTION_LEVEL_QUARTILE);
+    JCQRCode* qr = jc_qrencode((const uint8_t*)text, (uint32_t)strlen(text), JC_QRE_ERROR_CORRECTION_LEVEL_QUARTILE);
     save_image(qr, "test.png");
+    free(qr);
 
+    text = "http://to.king.com/DefWarez";
+    qr = jc_qrencode((const uint8_t*)text, (uint32_t)strlen(text), JC_QRE_ERROR_CORRECTION_LEVEL_QUARTILE);
+    save_image(qr, "DefWarez.png");
+    free(qr);
+
+    text = "http://to.king.com/DefWarez?game=1";
+    qr = jc_qrencode((const uint8_t*)text, (uint32_t)strlen(text), JC_QRE_ERROR_CORRECTION_LEVEL_QUARTILE);
+    save_image(qr, "DefWarez_game1.png");
+    free(qr);
+
+    text = "http://to.king.com/DefWarez?game=14";
+    qr = jc_qrencode((const uint8_t*)text, (uint32_t)strlen(text), JC_QRE_ERROR_CORRECTION_LEVEL_QUARTILE);
+    save_image(qr, "DefWarez_game14.png");
     free(qr);
 }
+
+
 
 TEST_BEGIN(qrencode_test, qrencode_main_setup, qrencode_main_teardown, test_setup, test_teardown)
     TEST(qrencode_test_input_type)
@@ -379,7 +394,7 @@ int main(int argc, const char** argv)
 
     (void)argc;
     (void)argv;
-    
+
     RUN_ALL();
     return 0;
 }

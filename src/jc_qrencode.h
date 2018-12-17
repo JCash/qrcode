@@ -26,7 +26,7 @@ typedef struct _JCQRCode
 {
     uint8_t* data;      // The modules of the qrcode
     uint32_t size;      // Size (in modules) of one side of the qrcode
-    uint32_t version;   // Version [1,40] 
+    uint32_t version;   // Version [1,40]
     uint32_t ecl;       // Error correction level
     uint32_t _pad;
 } JCQRCode;
@@ -195,14 +195,14 @@ static inline uint32_t _jc_qre_bitbuffer_write(uint8_t* buffer, uint32_t buffers
         return 0;
     if( numbits > 32 )
         return 0;
-    
+
     uint32_t pos = *cursor; // in bits
 
 //print_bits("encode:", input, numbits);
 
     for( uint32_t i = 0; i < numbits; ++i, ++pos)
     {
-        uint8_t currentvalue = buffer[pos / 8];
+        //uint8_t currentvalue = buffer[pos / 8];
 
         uint32_t targetindex = 7 - pos & 0x7;
 
@@ -232,11 +232,11 @@ static inline uint32_t _jc_qre_bitbuffer_append(uint8_t* buffer, uint32_t buffer
     uint32_t pos = *cursor; // in bits
     for( uint32_t i = 0; i < numbits; ++i, ++pos )
     {
-        uint8_t currentvalue = buffer[pos / 8];
+        //uint8_t currentvalue = buffer[pos / 8];
 
         uint32_t targetindex = 7 - pos & 0x7;
 
-        uint32_t inputindex = i & 0x7;
+        //uint32_t inputindex = i & 0x7;
         uint8_t inputbit = input[i / 8] >> (7 - (i & 7)) & 1;
 
         // clear the target bit and OR in the input bit
@@ -291,10 +291,10 @@ static inline uint32_t _jc_qre_guess_type_numeric(const uint8_t* input, uint32_t
     {
         if( input[i] < '0' || input[i] > '9' )
         {
-            return false;
+            return 0;
         }
     }
-    return true;
+    return 1;
 }
 
 
@@ -305,10 +305,10 @@ static inline uint32_t _jc_qre_guess_type_alphanumeric(const uint8_t* input, uin
         uint8_t c = input[i];
         if( c < ' ' || c > 'Z' || JC_QRE_ALPHANUMERIC_MAPPINGS[c - ' '] == -1 )
         {
-            return false;
+            return 0;
         }
     }
-    return true;
+    return 1;
 }
 
 static inline uint8_t _jc_qre_guess_type(const uint8_t* input, uint32_t inputlength)
@@ -356,7 +356,7 @@ static uint32_t _jc_qre_encode_alphanumeric(JCQRCodeSegment* seg, uint32_t maxsi
         uint32_t v1 = (uint32_t)JC_QRE_ALPHANUMERIC_MAPPINGS[characters[i*2+0] - ' '];
         uint32_t v2 = (uint32_t)JC_QRE_ALPHANUMERIC_MAPPINGS[characters[i*2+1] - ' '];
         uint32_t value = (v1 * 45) + v2;
-        
+
         _jc_qre_bitbuffer_write(seg->data.bits, maxsize, &seg->data.numbits, value, 11);
 
         //printf("hello: %c %c - > %u %u   %u bits\n", characters[i*2+0], characters[i*2+1], v1, v2, seg->data.numbits );
@@ -402,6 +402,9 @@ static uint32_t _jc_qre_add_segment(JCQRCodeInternal* qr, const uint8_t* input, 
 
     seg->type = _jc_qre_guess_type(input, inputlength);
 
+    printf("  _jc_qre_guess_type: %d\n", seg->type);
+
+
     uint32_t max_size = sizeof(qr->bitbuffer) - offset;
     uint32_t result = 0;
     if( seg->type == JC_QRE_INPUT_TYPE_NUMERIC ) {
@@ -422,7 +425,7 @@ static uint8_t _jc_qre_rs_multiply(uint8_t x, uint8_t y)
     for( int32_t i = 7; i >= 0; --i )
     {
         v = (v << 1) ^ ( (v >> 7) * 0x11D ); // Do modulo 0x11D if it overflows
-        v ^= ((y >> i) & 1) * x;            // Only if y is odd 
+        v ^= ((y >> i) & 1) * x;            // Only if y is odd
     }
     return (uint8_t)v;
 }
@@ -596,9 +599,9 @@ static inline void _jc_qre_draw_function_module(JCQRCodeInternal* qr, int32_t x,
     qr->image[y * 256 + x] = black ? 0 : 255;
     qr->image_fun[y * 256 + x] = 1;
 }
-static inline bool _jc_qre_is_function_module(JCQRCodeInternal* qr, int32_t x, int32_t y)
+static inline uint32_t _jc_qre_is_function_module(JCQRCodeInternal* qr, int32_t x, int32_t y)
 {
-    return qr->image_fun[y * 256 + x] != 0;
+    return qr->image_fun[y * 256 + x] != 0 ? 1 : 0;
 }
 
 static void _jc_qre_draw_finder_pattern(JCQRCodeInternal* qr, int32_t x, int32_t y)
@@ -680,7 +683,7 @@ static void _jc_qre_draw_finder_patterns(JCQRCodeInternal* qr)
     if( qr->qrcode.version > 1 )
     {
         // alignment patterns
-        //_jc_qre_draw_finder_pattern(qr, 3, size-4);        
+        //_jc_qre_draw_finder_pattern(qr, 3, size-4);
     }
 
 /*
@@ -694,7 +697,7 @@ static void _jc_qre_draw_finder_patterns(JCQRCodeInternal* qr)
     }*/
 
     // the dark module
-    _jc_qre_draw_function_module(qr, 8, (4 * qr->qrcode.version) + 9, true);
+    _jc_qre_draw_function_module(qr, 8, (4 * qr->qrcode.version) + 9, 1);
 }
 
 static void _jc_qre_draw_format(JCQRCodeInternal* qr, uint32_t pattern_mask)

@@ -4,6 +4,12 @@
 #include <string.h>
 #include <unistd.h>
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
+#define JC_QRENCODE_IMPLEMENTATION
+#include "jc_qrencode.h"
+
 static void Usage()
 {
     printf("Usage: qrencode [options] [text]\n");
@@ -33,6 +39,36 @@ static void read_input(char* buffer, uint32_t buffersize, uint32_t* length)
     *length = l;
 }
 */
+
+static int save_image(JCQRCode* qr, const char* path)
+{
+    uint32_t size = qr->size;
+
+    uint32_t border = 2;
+    uint32_t scale = 8;
+    uint32_t newsize = scale*(size + 2 * border);
+    uint8_t* large = (uint8_t*)malloc( newsize * newsize );
+
+    memset(large, 255, newsize*newsize);
+
+    for( uint32_t y = 0; y < size*scale; ++y )
+    {
+        for( uint32_t x = 0; x < size*scale; ++x )
+        {
+            uint8_t module = qr->data[(y/scale)*256 + (x/scale)];
+            large[(y + scale*border) * newsize + x + scale*border] = module;
+        }
+    }
+
+    int result = stbi_write_png(path, (int)newsize, (int)newsize, 1, large, (int)newsize);
+    free(large);
+
+    if(result)
+        printf("Wrote to %s\n", path);
+    else
+        printf("Failed to write to %s\n", path);
+    return result;
+}
 
 static void read_input(const char* path, char* buffer, uint32_t buffersize, uint32_t* length)
 {
@@ -185,6 +221,11 @@ int main(int argc, const char** argv)
     }
 
     printf("TEXT: '%s'\n", g_Text);
+
+    JCQRCode* qr = jc_qrencode((const uint8_t*)g_Text, (uint32_t)strlen(g_Text), JC_QRE_ERROR_CORRECTION_LEVEL_QUARTILE);
+    save_image(qr, outputfile);
+
+    free(qr);
 
 /*
     size_t imagesize = (size_t)(width*height*3);
